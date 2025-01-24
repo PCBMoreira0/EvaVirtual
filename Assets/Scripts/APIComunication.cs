@@ -8,10 +8,9 @@ using UnityEngine.Networking;
 public class APIComunication : MonoBehaviour
 {
     private string uuid = string.Empty;
-    private string defaultUri = "";
+    private string defaultUri = "http://192.168.1.92:8000";
 
-    public UnityEvent initializationComplete;
-    public UnityEvent<CommandJson> command;
+    public event Action OnInitializationComplete;
 
     private class InitEndpoint
     {
@@ -29,13 +28,13 @@ public class APIComunication : MonoBehaviour
         public string file;
         public bool block;
     }
-    public class CommandTalkJson : CommandJson { public string talk; }
+    public class CommandTalkJson : CommandJson { public string text; }
     public class CommandWaitJson : CommandJson { public float wait; }
     public class CommandEmotionJson : CommandJson { public string emotion; }
     public class CommandMotionJson : CommandJson { public string member; public string direction; }
     #endregion
 
-    public void UpdateIP(String ip)
+    public void UpdateIP(string ip)
     {
         defaultUri = String.Concat("http://", ip);
     }
@@ -48,7 +47,6 @@ public class APIComunication : MonoBehaviour
 
     IEnumerator StartSimulationCoroutine()
     {
-        Debug.Log(defaultUri);
         using (var web = UnityWebRequest.Post($"{defaultUri}/sim/init", "", "Content/json"))
         {
             // Init endpoint
@@ -63,7 +61,7 @@ public class APIComunication : MonoBehaviour
             uuid = JsonUtility.FromJson<InitEndpoint>(v).uuid;
         }
 
-        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/import/{uuid}/?path=listen_EvaML", "", "Content/Json"))
+        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/import/{uuid}/?path=teste_EvaML", "", "Content/Json"))
         {
             // Import endpoint
             yield return web.SendWebRequest();
@@ -86,10 +84,10 @@ public class APIComunication : MonoBehaviour
             }
         }
 
-        initializationComplete?.Invoke();
+        OnInitializationComplete?.Invoke();
     }
 
-    public IEnumerator NextCommand()
+    public IEnumerator NextCommand(Action<CommandJson> result)
     {
         using (var web = UnityWebRequest.Post($"{defaultUri}/sim/next/{uuid}", "", "Content/Json"))
         {
@@ -99,16 +97,14 @@ public class APIComunication : MonoBehaviour
             {
                 Debug.Log("ERROR: " + web.error);
             }
-
+        
             string a = web.downloadHandler.text;
             var c = JsonUtility.FromJson<CommandJson>(a);
 
             switch (c.command)
             {
                 case "Talk":
-                    var b = JsonUtility.FromJson<CommandTalkJson>(a);
-                    c = b;
-                    Debug.Log(b.talk);
+                    c = JsonUtility.FromJson<CommandTalkJson>(a);
                     break;
                 case "Wait":
                     c = JsonUtility.FromJson<CommandWaitJson>(a);
@@ -118,7 +114,7 @@ public class APIComunication : MonoBehaviour
                     break;
             }
       
-            command?.Invoke(c);
+            result?.Invoke(c);
         }
     }
 }

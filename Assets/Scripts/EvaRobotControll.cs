@@ -1,14 +1,24 @@
 using JetBrains.Annotations;
+using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class EvaRobotControll : MonoBehaviour
 {
-    private APIComunication.CommandJson currentCommmand;
-    public APIComunication webCommunication;
+    [SerializeField] private APIComunication webCommunication;
 
-    public TextMeshProUGUI dialogueBox;
+    #region Events
+    public UnityEvent<string> commandTalk;
+    public UnityEvent<EmotionType> commandEmotion;
+    #endregion
+
+
+    private void Start()
+    {
+        webCommunication.OnInitializationComplete += StartRobot;
+    }
 
     public void StartRobot()
     {
@@ -17,36 +27,28 @@ public class EvaRobotControll : MonoBehaviour
     
     IEnumerator Execute()
     {
+        APIComunication.CommandJson currentCommand = null;
         do
         {
-            yield return StartCoroutine(webCommunication.NextCommand());
-            Parser(currentCommmand);
+            yield return StartCoroutine(webCommunication.NextCommand((result) => { currentCommand = result; }));
+            Parser(currentCommand);
             yield return new WaitForSeconds(2);
-        } while (currentCommmand.command != "End of script");
-    }
-
-    public void ParseCommand(APIComunication.CommandJson command)
-    {
-        currentCommmand = command;
+           
+        } while (currentCommand != null && currentCommand.command != "End of script");
     }
 
     public void Parser(APIComunication.CommandJson command)
     {
-        switch (command.command)
+        if (command == null) return;
+
+        switch (command)
         {
-            case "Talk":
-                if (command is APIComunication.CommandTalkJson cTalk)
-                {
-                    Debug.Log(cTalk.talk);
-                    TalkCommand(cTalk.talk);
-                }
+            case APIComunication.CommandTalkJson:
+                commandTalk?.Invoke(((APIComunication.CommandTalkJson)command).text);
+                break;
+            case APIComunication.CommandEmotionJson:
+                commandEmotion?.Invoke(Enum.Parse<EmotionType>(((APIComunication.CommandEmotionJson)command).emotion));
                 break;
         }
-    }
-
-    public void TalkCommand(string text)
-    {
-        dialogueBox.text = text;
-        Debug.Log(text);
     }
 }
