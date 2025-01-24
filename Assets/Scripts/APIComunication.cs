@@ -8,7 +8,7 @@ using UnityEngine.Networking;
 public class APIComunication : MonoBehaviour
 {
     private string uuid = string.Empty;
-    private string defaultUri = "http://192.168.1.93:8000";
+    private string defaultUri = "";
 
     public UnityEvent initializationComplete;
     public UnityEvent<CommandJson> command;
@@ -32,11 +32,12 @@ public class APIComunication : MonoBehaviour
     public class CommandTalkJson : CommandJson { public string talk; }
     public class CommandWaitJson : CommandJson { public float wait; }
     public class CommandEmotionJson : CommandJson { public string emotion; }
+    public class CommandMotionJson : CommandJson { public string member; public string direction; }
     #endregion
 
-    public void UpdateIP(string ip)
+    public void UpdateIP(String ip)
     {
-        defaultUri = "http://" + ip;
+        defaultUri = String.Concat("http://", ip);
     }
 
     public void StartSimulation()
@@ -47,11 +48,11 @@ public class APIComunication : MonoBehaviour
 
     IEnumerator StartSimulationCoroutine()
     {
-        using (var web = UnityWebRequest.Post(defaultUri + "/sim/init", "", "Content/json"))
+        Debug.Log(defaultUri);
+        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/init", "", "Content/json"))
         {
             // Init endpoint
             yield return web.SendWebRequest();
-            Debug.Log(web.uri);
 
             if (web.result != UnityWebRequest.Result.Success)
             {
@@ -62,9 +63,8 @@ public class APIComunication : MonoBehaviour
             uuid = JsonUtility.FromJson<InitEndpoint>(v).uuid;
         }
 
-        using (var web = UnityWebRequest.Post(defaultUri + "/sim/import/" + uuid + "/?path=listen_EvaML", "", "Content/Json"))
+        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/import/{uuid}/?path=listen_EvaML", "", "Content/Json"))
         {
-            Debug.Log(web.uri);
             // Import endpoint
             yield return web.SendWebRequest();
 
@@ -75,7 +75,7 @@ public class APIComunication : MonoBehaviour
             }
         }
 
-        using (var web = UnityWebRequest.Post(defaultUri + "/sim/start/" + uuid, "", "Content/Json"))
+        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/start/{uuid}", "", "Content/Json"))
         {
             // Start endpoint
             yield return web.SendWebRequest();
@@ -91,7 +91,7 @@ public class APIComunication : MonoBehaviour
 
     public IEnumerator NextCommand()
     {
-        using (var web = UnityWebRequest.Post(defaultUri + "/sim/next/" + uuid, "", "Content/Json"))
+        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/next/{uuid}", "", "Content/Json"))
         {
             yield return web.SendWebRequest();
 
