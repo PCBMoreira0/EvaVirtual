@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 5632ffe1226a54845a227cd3cf96a35a
+guid: 4bd1f86b380729243a7fb381ba3c8e2f
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -14,16 +14,6 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: ScreenFace
     second: {fileID: 2100000, guid: 791533f3222fd994c9e5097bb352c6fb, type: 2}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: BodyTexture
-    second: {fileID: 2800000, guid: d8ea2fd30f06e4b498b6a8e605c2c371, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: eyes_disgust
-    second: {fileID: 2800000, guid: 353312b4e378ef941802675c89ef1526, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0

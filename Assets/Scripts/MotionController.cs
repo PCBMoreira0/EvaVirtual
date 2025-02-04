@@ -19,7 +19,6 @@ public class MotionController : MonoBehaviour
     [SerializeField] private Transform leftHand;
     [SerializeField] private Transform rightHand;
     [SerializeField] private Transform head;
-    [SerializeField] private Quaternion initHead;
 
     [Header("Configs")]
     [SerializeField] MotionConfig motionConfigurations;
@@ -38,10 +37,6 @@ public class MotionController : MonoBehaviour
         public float leftRight_degree = 20f; 
     }
 
-    private void Start()
-    {
-        initHead = head.transform.localRotation;
-    }
     public void DebugMotion()
     {
         //StartCoroutine(Motion("head", MotionTypes.NO));
