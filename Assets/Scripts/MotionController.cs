@@ -14,7 +14,7 @@ public enum MotionTypes
 
 public class MotionController : MonoBehaviour
 {
-    public float timeToResetRotation = 1f;
+    public float turnSpeed = 20f;
     [Header("Body Parts")]
     [SerializeField] private Transform leftHand;
     [SerializeField] private Transform rightHand;
@@ -33,11 +33,9 @@ public class MotionController : MonoBehaviour
     {
         [Header("\"2UP-DOWN\" Motion")]
         public float twoUpDown_degree = 20f;
-        public float twoUpDown_time = 1f;
 
         [Header("\"LEFT-RIGHT\" Motion")]
         public float leftRight_degree = 20f; 
-        public float leftRight_time = 1f;
     }
 
     private void Start()
@@ -132,10 +130,10 @@ public class MotionController : MonoBehaviour
     private IEnumerator MoveHead2Up()
     {
         float currentTime = 0f;
-        float normalizedDegree = motionConfigurations.twoUpDown_degree / motionConfigurations.twoUpDown_time;
-        while (currentTime < motionConfigurations.twoUpDown_time)
+        float time = motionConfigurations.twoUpDown_degree / turnSpeed;
+        while (currentTime < time)
         {
-            head.Rotate(normalizedDegree * Time.deltaTime, 0, 0);
+            head.Rotate(motionConfigurations.twoUpDown_degree * Time.deltaTime, 0, 0);
 
             currentTime += Time.deltaTime;
             yield return new WaitForEndOfFrame();
@@ -145,10 +143,10 @@ public class MotionController : MonoBehaviour
     private IEnumerator MoveHead2Down()
     {
         float currentTime = 0f;
-        float normalizedDegree = motionConfigurations.twoUpDown_degree / motionConfigurations.twoUpDown_time;
-        while (currentTime < motionConfigurations.twoUpDown_time)
+        float time = motionConfigurations.twoUpDown_degree / turnSpeed;
+        while (currentTime < time)
         {
-            head.Rotate(-normalizedDegree * Time.deltaTime, 0, 0);
+            head.Rotate(-motionConfigurations.twoUpDown_degree * Time.deltaTime, 0, 0);
 
             currentTime += Time.deltaTime;
             yield return new WaitForEndOfFrame();
@@ -158,10 +156,10 @@ public class MotionController : MonoBehaviour
     private IEnumerator MoveHeadLeft()
     {
         float currentTime = 0f;
-        float normalizedDegree = motionConfigurations.twoUpDown_degree / motionConfigurations.twoUpDown_time;
-        while (currentTime < motionConfigurations.twoUpDown_time)
+        float time = motionConfigurations.leftRight_degree / turnSpeed;
+        while (currentTime < time)
         {
-            head.Rotate(0, -normalizedDegree * Time.deltaTime, 0);
+            head.Rotate(0, -motionConfigurations.leftRight_degree * Time.deltaTime, 0);
 
             currentTime += Time.deltaTime;
             yield return new WaitForEndOfFrame();
@@ -171,10 +169,10 @@ public class MotionController : MonoBehaviour
     private IEnumerator MoveHeadRight()
     {
         float currentTime = 0f;
-        float normalizedDegree = motionConfigurations.twoUpDown_degree / motionConfigurations.twoUpDown_time;
-        while (currentTime < motionConfigurations.twoUpDown_time)
+        float time = motionConfigurations.leftRight_degree / turnSpeed;
+        while (currentTime < time)
         {
-            head.Rotate(0, normalizedDegree * Time.deltaTime, 0);
+            head.Rotate(0, motionConfigurations.leftRight_degree * Time.deltaTime, 0);
 
             currentTime += Time.deltaTime;
             yield return new WaitForEndOfFrame();
@@ -183,13 +181,11 @@ public class MotionController : MonoBehaviour
 
     public IEnumerator ResetPosition()
     {
-        float speed = Quaternion.Angle(head.localRotation, Quaternion.identity) / timeToResetRotation;
         while (Quaternion.Angle(head.localRotation, Quaternion.identity) > 0.01f)
         {
-            var a = Quaternion.RotateTowards(head.localRotation, Quaternion.identity, speed * Time.deltaTime);
+            var a = Quaternion.RotateTowards(head.localRotation, Quaternion.identity, turnSpeed * Time.deltaTime);
             head.localRotation = a;
             yield return new WaitForEndOfFrame();
-            Debug.Log("Sim: " + head.localEulerAngles);
         }
         head.localRotation = Quaternion.identity;
     }
