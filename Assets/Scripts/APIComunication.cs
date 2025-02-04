@@ -8,7 +8,7 @@ using UnityEngine.Networking;
 public class APIComunication : MonoBehaviour
 {
     private string uuid = string.Empty;
-    private string defaultUri = "http://192.168.1.92:8000";
+    private string defaultUri = "http://192.168.1.93:8000";
 
     public event Action OnInitializationComplete;
 
@@ -21,6 +21,18 @@ public class APIComunication : MonoBehaviour
     public class CommandJson
     {
         public string command;
+
+        public static T Parse<T>(CommandJson command) where T : CommandJson
+        {
+            if(command is T converted)
+            {
+                return converted;
+            }
+            else
+            {
+                throw new InvalidCastException($"Cannot cast {command.GetType()} to {typeof(T)}");
+            }
+        }
     }
 
     public class CommandAudioJson : CommandJson
@@ -111,6 +123,9 @@ public class APIComunication : MonoBehaviour
                     break;
                 case "Emotion":
                     c = JsonUtility.FromJson<CommandEmotionJson>(a);
+                    break;
+                case "Motion":
+                    c = JsonUtility.FromJson<CommandMotionJson>(a);
                     break;
             }
       
