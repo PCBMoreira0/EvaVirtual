@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -28,7 +29,9 @@ public class EmotionController : MonoBehaviour
     [SerializeField] Texture sad;
     [SerializeField] Texture surprise;
 
+    [SerializeField] private float transitionTime = 0.5f;
     private Texture[] emotions = new Texture[8];
+    private EmotionType currentEmotion = EmotionType.NEUTRAL;
 
     private void Awake()
     {
@@ -43,6 +46,20 @@ public class EmotionController : MonoBehaviour
     }
     public void ChangeEmotion(EmotionType newEmotion)
     {
+        currentEmotion = newEmotion;  
         screen.materials[1].SetTexture("_BaseMap", emotions[(int)newEmotion]);
+    }
+
+    public IEnumerator ChangeEmotion_routine(EmotionType newEmotion)
+    {
+        int current_index = (int)currentEmotion;
+        int dir = (int)Mathf.Sign((int)newEmotion - (int)currentEmotion);
+        for (int i = (int)currentEmotion; i != (int)newEmotion; i += dir)
+        {
+            ChangeEmotion((EmotionType) i);
+            yield return new WaitForSeconds(transitionTime);
+        }
+
+        ChangeEmotion(newEmotion);
     }
 }

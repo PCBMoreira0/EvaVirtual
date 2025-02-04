@@ -1072,7 +1072,8 @@ GameObject:
   - component: {fileID: 899783276}
   - component: {fileID: 899783275}
   - component: {fileID: 899783277}
-  - component: {fileID: 899783278}
+  - component: {fileID: 899783280}
+  - component: {fileID: 899783281}
   - component: {fileID: 899783279}
   m_Layer: 0
   m_Name: EvaRobot
@@ -1122,58 +1123,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   webCommunication: {fileID: 899783275}
-  commandTalk:
+  timeBetweenCommands: 1.4
+  OnCommandReceived:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1048262198}
-        m_TargetAssemblyTypeName: ChangeDialogue, Assembly-CSharp
-        m_MethodName: SetText
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  commandEmotion:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 899783278}
-        m_TargetAssemblyTypeName: EmotionHandler, Assembly-CSharp
-        m_MethodName: ChangeEmotion
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
---- !u!114 &899783278
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 899783274}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 729ddabbaef144e44b363c20bfba1396, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  screen: {fileID: 1452404407}
-  emotions:
-  - {fileID: 2800000, guid: 5509525dd2fff224db8c11c13482dcda, type: 3}
-  - {fileID: 2800000, guid: fc143c61c73cc654c8a1421ed15b9030, type: 3}
-  - {fileID: 2800000, guid: c8e69d01bf982a242b0c6c6ad932ef70, type: 3}
-  - {fileID: 2800000, guid: 25f3115340104054f80aaca75e1bca9a, type: 3}
-  - {fileID: 2800000, guid: 2c0a3049544a49845be825ab3988ed17, type: 3}
-  - {fileID: 2800000, guid: f585975522716f449bcda55e29e3d5c8, type: 3}
-  - {fileID: 2800000, guid: b1ecd2f41567d554e851ddc2a5ac9005, type: 3}
-  - {fileID: 2800000, guid: 90b788ffdef4dd544b827994c3faf054, type: 3}
+      m_Calls: []
 --- !u!114 &899783279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1186,14 +1139,49 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57ab10b64452efb4d98d6bd7142ec179, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  turnSpeed: 20
   leftHand: {fileID: 712876085}
   rightHand: {fileID: 1615203848}
   head: {fileID: 163963133}
+  initHead: {x: 0, y: 0, z: 0, w: 0}
   motionConfigurations:
-    yes_degree: 20
-    yes_time: 0.5
-    no_degree: 20
-    no_time: 0.5
+    twoUpDown_degree: 20
+    leftRight_degree: 20
+--- !u!114 &899783280
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 899783274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e248f7f6cbffde468dd3dfbb6170dc1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dialogueBox: {fileID: 1048262198}
+--- !u!114 &899783281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 899783274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 729ddabbaef144e44b363c20bfba1396, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  screen: {fileID: 1452404407}
+  angry: {fileID: 2800000, guid: 5509525dd2fff224db8c11c13482dcda, type: 3}
+  disgust: {fileID: 2800000, guid: fc143c61c73cc654c8a1421ed15b9030, type: 3}
+  fear: {fileID: 2800000, guid: c8e69d01bf982a242b0c6c6ad932ef70, type: 3}
+  happy: {fileID: 2800000, guid: 25f3115340104054f80aaca75e1bca9a, type: 3}
+  inlove: {fileID: 2800000, guid: 2c0a3049544a49845be825ab3988ed17, type: 3}
+  neutral: {fileID: 2800000, guid: f585975522716f449bcda55e29e3d5c8, type: 3}
+  sad: {fileID: 2800000, guid: b1ecd2f41567d554e851ddc2a5ac9005, type: 3}
+  surprise: {fileID: 2800000, guid: 90b788ffdef4dd544b827994c3faf054, type: 3}
+  transitionTime: 0.2
 --- !u!1 &1048262194
 GameObject:
   m_ObjectHideFlags: 0
@@ -2181,8 +2169,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 899783279}
-        m_TargetAssemblyTypeName: MotionHandler, Assembly-CSharp
-        m_MethodName: Motion
+        m_TargetAssemblyTypeName: MotionController, Assembly-CSharp
+        m_MethodName: DebugMotion
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

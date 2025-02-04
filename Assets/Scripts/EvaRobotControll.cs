@@ -51,6 +51,8 @@ public class EvaRobotControll : MonoBehaviour
 
         // Reset position
         yield return motionController.ResetPosition();
+        emotionController.ChangeEmotion(EmotionType.NEUTRAL);
+        talkController.Talk("");
     }
 
     private IEnumerator Parser(APIComunication.CommandJson command)
@@ -66,7 +68,7 @@ public class EvaRobotControll : MonoBehaviour
 
             case APIComunication.CommandEmotionJson emotionCommand:
                 if (emotionController != null)
-                    emotionController.ChangeEmotion(Enum.Parse<EmotionType>(emotionCommand.emotion));
+                    yield return StartCoroutine(emotionController.ChangeEmotion_routine(Enum.Parse<EmotionType>(emotionCommand.emotion)));
                 break;
 
             case APIComunication.CommandMotionJson motionCommand:
