@@ -2,6 +2,8 @@ using JetBrains.Annotations;
 using System;
 using System.Collections;
 using TMPro;
+using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -13,6 +15,8 @@ public class EvaRobotControll : MonoBehaviour
 
     #region Events
     public UnityEvent<APIComunication.CommandJson> OnCommandReceived;
+    public UnityEvent OnSimulationStarted;
+    public UnityEvent OnSimulationEnded;
     #endregion
 
 
@@ -29,16 +33,54 @@ public class EvaRobotControll : MonoBehaviour
         motionController = GetComponent<MotionController>();
     }
 
-    private void Start()
+    private void OnEnable()
     {
         webCommunication.OnInitializationComplete += StartRobot;
     }
 
+    private void OnDisable()
+    {
+        webCommunication.OnInitializationComplete -= StartRobot;
+    }
+
+#if UNITY_EDITOR
+    private void Update()
+    {
+        if (!EditorApplication.isPlaying)
+        {
+            StartCoroutine(webCommunication.DeleteSimulator());
+        }
+    }
+#endif
+
     public void StartRobot()
     {
         StartCoroutine(Execute());
+        OnSimulationStarted?.Invoke();
     }
     
+    public void StopRobot()
+    {
+        StartCoroutine(Stop());
+        OnSimulationEnded?.Invoke();
+    }
+
+    IEnumerator Stop()
+    {
+        StopCoroutine("Execute");
+        webCommunication.StopAllCoroutines();
+        talkController.StopAllCoroutines();
+        yield return StartCoroutine(webCommunication.DeleteSimulator());
+        yield return StartCoroutine(ResetRobot());
+    }
+
+    private IEnumerator ResetRobot()
+    {
+        yield return motionController.ResetPosition();
+        emotionController.ChangeEmotion(EmotionType.NEUTRAL);
+        talkController.ResetDialogueBox();
+        OnSimulationEnded?.Invoke();
+    }
     IEnumerator Execute()
     {
         APIComunication.CommandJson currentCommand = null;
@@ -46,13 +88,12 @@ public class EvaRobotControll : MonoBehaviour
         {
             yield return StartCoroutine(webCommunication.NextCommand((result) => { currentCommand = result; }));
             yield return Parser(currentCommand);
-            yield return new WaitForSeconds(timeBetweenCommands);
+            //yield return new WaitForSeconds(timeBetweenCommands);
         } while (currentCommand != null && currentCommand.command != "End of script");
 
-        // Reset position
-        yield return motionController.ResetPosition();
-        emotionController.ChangeEmotion(EmotionType.NEUTRAL);
-        talkController.Talk("");
+        ResetRobot();
+
+        yield return StartCoroutine(webCommunication.DeleteSimulator());
     }
 
     private IEnumerator Parser(APIComunication.CommandJson command)
@@ -63,7 +104,7 @@ public class EvaRobotControll : MonoBehaviour
         {
             case APIComunication.CommandTalkJson commandTalkJson:
                 if (talkController != null) 
-                    talkController.Talk(commandTalkJson.text);
+                    yield return StartCoroutine(talkController.Talk(commandTalkJson.text));
                 break;
 
             case APIComunication.CommandEmotionJson emotionCommand:
@@ -79,5 +120,10 @@ public class EvaRobotControll : MonoBehaviour
 
         OnCommandReceived?.Invoke(command);
         yield return null;
+    }
+
+    private void OnApplicationQuit()
+    {
+        StartCoroutine(webCommunication.DeleteSimulator());
     }
 }

@@ -23,8 +23,6 @@ public class MotionController : MonoBehaviour
     [Header("Configs")]
     [SerializeField] MotionConfig motionConfigurations;
 
-    public event Action OnMotionEnded;
-
     private Coroutine currentCoroutine;
 
     [Serializable]
