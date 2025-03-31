@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.IO;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
@@ -11,6 +12,8 @@ public class APIComunication : MonoBehaviour
     private string defaultUri = "http://192.168.1.93:8000";
 
     public event Action OnInitializationComplete;
+
+    public AudioClip audioCliper;
 
     private class InitEndpoint
     {
@@ -53,6 +56,11 @@ public class APIComunication : MonoBehaviour
         {
             this.input = input;
         }
+    }
+
+    public class STTField
+    {
+        public string result = "";
     }
 
     public void UpdateIP(string ip)
@@ -145,17 +153,77 @@ public class APIComunication : MonoBehaviour
     public IEnumerator GetTTS(string text, Action<AudioClip> result)
     {
         InputField input = new InputField(text);
-        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/tts", JsonUtility.ToJson(input), "application/Json"))
+        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/tts/inference", JsonUtility.ToJson(input), "application/Json"))
         {
             web.downloadHandler = new DownloadHandlerAudioClip(web.uri, AudioType.WAV);
+
+            yield return web.SendWebRequest();
+
+            if (web.result != UnityWebRequest.Result.Success)
+            {
+                Debug.Log("ERROR: " + web.error);
+                yield return null;
+            }
+            DownloadHandlerAudioClip dhandler = (DownloadHandlerAudioClip)web.downloadHandler;
+            result?.Invoke(dhandler.audioClip);
+        }
+    }
+
+    public void StartSTT()
+    {
+        StartCoroutine(GetSTT(audioCliper, null));
+    }
+
+    private byte[] ConvertAudioClipToWav(AudioClip clip)
+    {
+        using (MemoryStream stream = new MemoryStream())
+        using (BinaryWriter writer = new BinaryWriter(stream))
+        {
+            float[] samples = new float[clip.samples * clip.channels];
+            clip.GetData(samples, 0);
+
+            // Cabeçalho WAV
+            writer.Write(new char[] { 'R', 'I', 'F', 'F' });
+            writer.Write(36 + samples.Length * 2);
+            writer.Write(new char[] { 'W', 'A', 'V', 'E' });
+            writer.Write(new char[] { 'f', 'm', 't', ' ' });
+            writer.Write(16);
+            writer.Write((short)1);
+            writer.Write((short)clip.channels);
+            writer.Write(clip.frequency);
+            writer.Write(clip.frequency * clip.channels * 2);
+            writer.Write((short)(clip.channels * 2));
+            writer.Write((short)16);
+
+            // Escreve os dados de áudio
+            writer.Write(new char[] { 'd', 'a', 't', 'a' });
+            writer.Write(samples.Length * 2);
+            foreach (float sample in samples)
+            {
+                short intSample = (short)(sample * short.MaxValue);
+                writer.Write(intSample);
+            }
+
+            return stream.ToArray();
+        }
+    }
+
+    public IEnumerator GetSTT(AudioClip clip, Action<string> result)
+    {
+        WWWForm www = new WWWForm();
+        www.AddBinaryData("file", ConvertAudioClipToWav(clip), "audiooo.wav", "audio/wav");
+
+        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/stt", www))
+        {
             yield return web.SendWebRequest();
 
             if (web.result != UnityWebRequest.Result.Success)
             {
                 Debug.Log("ERROR: " + web.error);
             }
-            DownloadHandlerAudioClip dhandler = (DownloadHandlerAudioClip)web.downloadHandler;
-            result?.Invoke(dhandler.audioClip);
+            string a = web.downloadHandler.text;
+            //var c = JsonUtility.FromJson<STTField>(a);
+            Debug.Log(a);
         }
     }
 
