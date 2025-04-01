@@ -211,7 +211,8 @@ public class APIComunication : MonoBehaviour
     public IEnumerator GetSTT(AudioClip clip, Action<string> result)
     {
         WWWForm www = new WWWForm();
-        www.AddBinaryData("file", ConvertAudioClipToWav(clip), "audiooo.wav", "audio/wav");
+        var b = ConvertAudioClipToWav(clip);
+        www.AddBinaryData("file", b, "audiooo.wav", "audio/wav");
 
         using (var web = UnityWebRequest.Post($"{defaultUri}/sim/stt", www))
         {
