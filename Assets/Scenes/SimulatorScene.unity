@@ -414,7 +414,7 @@ MonoBehaviour:
   m_fontSize: 51.7
   m_fontSizeBase: 51.7
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -1479,7 +1479,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 28}
+  m_SizeDelta: {x: 0, y: 57.9611}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &501713001
 GameObject:
@@ -1764,9 +1764,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 899783275}
-        m_TargetAssemblyTypeName: APIComunication, Assembly-CSharp
-        m_MethodName: StartSTT
+      - m_Target: {fileID: 899783283}
+        m_TargetAssemblyTypeName: InputController, Assembly-CSharp
+        m_MethodName: TurnMicrophone
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1850,8 +1850,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 20}
+  m_AnchoredPosition: {x: 0, y: 0.00016593933}
+  m_SizeDelta: {x: 0, y: 57.961}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &668345509
 MonoBehaviour:
@@ -2669,10 +2669,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dfab5d1a6615d949850566611aa87eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  audioClip: {fileID: 0}
+  api: {fileID: 899783275}
   textMeshProUGUI: {fileID: 282848243}
   drop: {fileID: 501713003}
   button: {fileID: 0}
+  silent_threshold: 0.005
   runWhisper: {fileID: 0}
 --- !u!1 &920633028
 GameObject:
@@ -4371,7 +4372,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 5, y: -0.5}
+  m_AnchoredPosition: {x: 5, y: -0.4999981}
   m_SizeDelta: {x: -30, y: -3}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1491892403
@@ -4421,10 +4422,10 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 14
+  m_fontSize: 49.15
   m_fontSizeBase: 14
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
