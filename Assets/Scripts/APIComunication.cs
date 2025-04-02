@@ -169,7 +169,7 @@ public class APIComunication : MonoBehaviour
         }
     }
 
-    public void StartSTT()
+    public void StartSTT(AudioClip audioCliper)
     {
         StartCoroutine(GetSTT(audioCliper, null));
     }

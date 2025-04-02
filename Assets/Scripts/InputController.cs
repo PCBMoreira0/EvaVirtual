@@ -1,13 +1,17 @@
+using System.Collections;
 using TMPro;
+using UnityEditor.PackageManager.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class InputController : MonoBehaviour
 {
-    [SerializeField] private AudioClip audioClip;
+    public APIComunication api;
     [SerializeField] private TextMeshProUGUI textMeshProUGUI;
     [SerializeField] private TMP_Dropdown drop;
     [SerializeField] private Button button;
+
+    [SerializeField] private float silent_threshold; 
 
     private string selectedDevice = "";
     public RunWhisper runWhisper;
@@ -18,6 +22,7 @@ public class InputController : MonoBehaviour
         {
             return;
         }
+
         for (int i = 0; i < Microphone.devices.Length; i++)
         {
             drop.options.Add(new TMP_Dropdown.OptionData(Microphone.devices[i]));
@@ -42,37 +47,54 @@ public class InputController : MonoBehaviour
         else
         {
 
-            StartRecording();
+            StartCoroutine(StartRecording());
         }
     }
 
-    private async void StartRecording()
+
+    private float GetLoundnessAverage(AudioClip clip, int micPos)
     {
-        audioClip = Microphone.Start(selectedDevice, true, 30, 16000);
-        button.image.color = Color.red;
+        const int sampleWindow = 3 * 16000;
+        float[] data = new float[sampleWindow];
+        clip.GetData(data, Mathf.Clamp(micPos - sampleWindow, 0, clip.samples-sampleWindow));
 
-        while (Microphone.IsRecording(selectedDevice))
+
+        // Pesquisar sobre fórmulas para calcular altura do áudio
+
+        float sample_sum = 0;
+        foreach (float audio_sample in data) 
         {
-            const int silentThreshold = 16000 * 3; // 3 seconds    
-            var micPos = Microphone.GetPosition(selectedDevice);
-            if (micPos > silentThreshold)
-            {
-                var data = new float[silentThreshold];
-                audioClip.GetData(data, Microphone.GetPosition(selectedDevice) - silentThreshold);
-                var silent = await runWhisper.Transcribe(data);
-                if (silent.Contains("(") || silent.Contains("[") || silent.Contains(")") || silent.Contains("]"))
-                {
-                    StopRecording();
-                }
-            }
-
-            var result = await runWhisper.Transcribe(audioClip);
-            textMeshProUGUI.SetText(result);
-
-            await Awaitable.NextFrameAsync();
+            sample_sum += Mathf.Abs(audio_sample);
         }
 
-        button.image.color = Color.white;
+        return sample_sum / sampleWindow;
+    }
+
+    private IEnumerator StartRecording()
+    {
+        AudioClip audioClip = Microphone.Start(selectedDevice, false, 30, 16000);
+
+        int lastMicPos = 0; 
+        while (Microphone.IsRecording(selectedDevice))
+        {
+            yield return new WaitForSeconds(3);
+            float loudness = GetLoundnessAverage(audioClip, Microphone.GetPosition(selectedDevice));
+            Debug.Log(loudness);
+            if(loudness <= silent_threshold)
+            {
+                lastMicPos = Microphone.GetPosition(selectedDevice);
+                StopRecording();
+            }
+        }
+
+        float[] data = new float[lastMicPos];
+        audioClip.GetData(data, 0);
+        AudioClip trimm = AudioClip.Create("trimmedAudio", lastMicPos, audioClip.channels, audioClip.frequency, false);
+        
+        trimm.SetData(data, 0);
+
+        api.StartSTT(trimm); 
+        StopAllCoroutines();
     }
 
     private void StopRecording()
