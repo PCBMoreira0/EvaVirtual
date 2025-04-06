@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
@@ -47,6 +48,7 @@ public class APIComunication : MonoBehaviour
     public class CommandWaitJson : CommandJson { public float wait; }
     public class CommandEmotionJson : CommandJson { public string emotion; }
     public class CommandMotionJson : CommandJson { public string member; public string direction; }
+    public class CommandListenJson : CommandJson { public string state; }
     #endregion
 
     public class InputField
@@ -61,6 +63,11 @@ public class APIComunication : MonoBehaviour
     public class STTField
     {
         public string result = "";
+    }
+
+    public void ChangeXML(string newXML)
+    {
+        xml = newXML;
     }
 
     public void UpdateIP(string ip)
@@ -83,11 +90,26 @@ public class APIComunication : MonoBehaviour
 
             if (web.result != UnityWebRequest.Result.Success)
             {
-                Debug.Log("ERROR: " + web.error);
+                Debug.Log(web.error);
+                yield break;
             }
 
             string v = web.downloadHandler.text;
-            uuid = JsonUtility.FromJson<InitEndpoint>(v).uuid;
+            if (!string.IsNullOrEmpty(v))
+            {
+                try
+                {
+                    uuid = JsonUtility.FromJson<InitEndpoint>(v).uuid;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Erro ao fazer parse do json: {e.Message}");
+                }
+            }
+            else
+            {
+                Debug.LogError("Speech To Text: Json returns null.");
+            }
         }
 
         using (var web = UnityWebRequest.Post($"{defaultUri}/sim/import/{uuid}/?path={xml}", "", "application/Json"))
@@ -97,8 +119,8 @@ public class APIComunication : MonoBehaviour
 
             if (web.result != UnityWebRequest.Result.Success)
             {
-                Debug.Log("ERROR: " + web.error);
-                Debug.Log(web.downloadHandler.text);
+                Debug.LogError(web.error + $"Conteúdo: {web.downloadHandler.text}");
+                yield break;
             }
         }
 
@@ -109,7 +131,8 @@ public class APIComunication : MonoBehaviour
 
             if (web.result != UnityWebRequest.Result.Success)
             {
-                Debug.Log("ERROR: " + web.error);
+                Debug.LogError(web.error);
+                yield break;
             }
         }
 
@@ -124,29 +147,62 @@ public class APIComunication : MonoBehaviour
 
             if (web.result != UnityWebRequest.Result.Success)
             {
-                Debug.Log("ERROR: " + web.error);
+                Debug.LogError(web.error);
+                yield break;
             }
         
             string a = web.downloadHandler.text;
-            var c = JsonUtility.FromJson<CommandJson>(a);
-
-            switch (c.command)
+            if (!string.IsNullOrEmpty(a))
             {
-                case "Talk":
-                    c = JsonUtility.FromJson<CommandTalkJson>(a);
-                    break;
-                case "Wait":
-                    c = JsonUtility.FromJson<CommandWaitJson>(a);
-                    break;
-                case "Emotion":
-                    c = JsonUtility.FromJson<CommandEmotionJson>(a);
-                    break;
-                case "Motion":
-                    c = JsonUtility.FromJson<CommandMotionJson>(a);
-                    break;
+                try
+                {
+                    var c = JsonUtility.FromJson<CommandJson>(a);
+
+                    switch (c.command)
+                    {
+                        case "Talk":
+                            c = JsonUtility.FromJson<CommandTalkJson>(a);
+                            break;
+                        case "Wait":
+                            c = JsonUtility.FromJson<CommandWaitJson>(a);
+                            break;
+                        case "Emotion":
+                            c = JsonUtility.FromJson<CommandEmotionJson>(a);
+                            break;
+                        case "Motion":
+                            c = JsonUtility.FromJson<CommandMotionJson>(a);
+                            break;
+                        case "Listen":
+                            c = JsonUtility.FromJson<CommandListenJson>(a);
+                            break;
+                    }
+
+                    result?.Invoke(c);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Erro ao fazer parse do json: {e.Message}");
+                }
             }
-      
-            result?.Invoke(c);
+            else
+            {
+                Debug.LogError("Speech To Text: Json returns null.");
+            }
+        }
+    }
+
+    public IEnumerator SendInput(string input)
+    {
+        InputField inputField = new InputField(input);
+        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/send/{uuid}", JsonUtility.ToJson(inputField), "application/Json"))
+        {
+            yield return web.SendWebRequest();
+
+            if (web.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError("ERROR: " + web.error);
+                yield break;
+            }
         }
     }
 
@@ -162,56 +218,17 @@ public class APIComunication : MonoBehaviour
             if (web.result != UnityWebRequest.Result.Success)
             {
                 Debug.Log("ERROR: " + web.error);
-                yield return null;
+                yield break;
             }
             DownloadHandlerAudioClip dhandler = (DownloadHandlerAudioClip)web.downloadHandler;
             result?.Invoke(dhandler.audioClip);
         }
     }
 
-    public void StartSTT(AudioClip audioCliper)
-    {
-        StartCoroutine(GetSTT(audioCliper, null));
-    }
-
-    private byte[] ConvertAudioClipToWav(AudioClip clip)
-    {
-        using (MemoryStream stream = new MemoryStream())
-        using (BinaryWriter writer = new BinaryWriter(stream))
-        {
-            float[] samples = new float[clip.samples * clip.channels];
-            clip.GetData(samples, 0);
-
-            // Cabeçalho WAV
-            writer.Write(new char[] { 'R', 'I', 'F', 'F' });
-            writer.Write(36 + samples.Length * 2);
-            writer.Write(new char[] { 'W', 'A', 'V', 'E' });
-            writer.Write(new char[] { 'f', 'm', 't', ' ' });
-            writer.Write(16);
-            writer.Write((short)1);
-            writer.Write((short)clip.channels);
-            writer.Write(clip.frequency);
-            writer.Write(clip.frequency * clip.channels * 2);
-            writer.Write((short)(clip.channels * 2));
-            writer.Write((short)16);
-
-            // Escreve os dados de áudio
-            writer.Write(new char[] { 'd', 'a', 't', 'a' });
-            writer.Write(samples.Length * 2);
-            foreach (float sample in samples)
-            {
-                short intSample = (short)(sample * short.MaxValue);
-                writer.Write(intSample);
-            }
-
-            return stream.ToArray();
-        }
-    }
-
     public IEnumerator GetSTT(AudioClip clip, Action<string> result)
     {
         WWWForm www = new WWWForm();
-        var b = ConvertAudioClipToWav(clip);
+        var b = AudioOperations.ConvertAudioClipToWav(clip);
         www.AddBinaryData("file", b, "audiooo.wav", "audio/wav");
 
         using (var web = UnityWebRequest.Post($"{defaultUri}/sim/stt", www))
@@ -220,11 +237,27 @@ public class APIComunication : MonoBehaviour
 
             if (web.result != UnityWebRequest.Result.Success)
             {
-                Debug.Log("ERROR: " + web.error);
+                Debug.LogError(web.error);
+                yield break;
             }
             string a = web.downloadHandler.text;
-            //var c = JsonUtility.FromJson<STTField>(a);
-            Debug.Log(a);
+
+            if (!string.IsNullOrEmpty(a))
+            {
+                try
+                {
+                    var c = JsonUtility.FromJson<STTField>(a);
+                    result?.Invoke(c.result);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Erro ao fazer parse do json: {e.Message}");
+                }
+            }
+            else
+            {
+                Debug.LogError("Speech To Text: Json returns null.");
+            }
         }
     }
 
@@ -236,7 +269,7 @@ public class APIComunication : MonoBehaviour
 
             if (web.result != UnityWebRequest.Result.Success)
             {
-                Debug.Log("ERROR: " + web.error);
+                Debug.LogError(web.error);
             }
         }
     }

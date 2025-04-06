@@ -24,6 +24,7 @@ public class EvaRobotControll : MonoBehaviour
     private TalkController talkController;
     private EmotionController emotionController;
     private MotionController motionController;
+    private ListenController listenController;
     #endregion
 
     private void Awake()
@@ -31,6 +32,7 @@ public class EvaRobotControll : MonoBehaviour
         talkController = GetComponent<TalkController>();
         emotionController = GetComponent<EmotionController>();
         motionController = GetComponent<MotionController>();
+        listenController = GetComponent<ListenController>();
     }
 
     private void OnEnable()
@@ -67,7 +69,7 @@ public class EvaRobotControll : MonoBehaviour
 
     IEnumerator Stop()
     {
-        StopCoroutine("Execute");
+        StopAllCoroutines();
         webCommunication.StopAllCoroutines();
         talkController.StopAllCoroutines();
         yield return StartCoroutine(webCommunication.DeleteSimulator());
@@ -87,8 +89,16 @@ public class EvaRobotControll : MonoBehaviour
         do
         {
             yield return StartCoroutine(webCommunication.NextCommand((result) => { currentCommand = result; }));
+
+            float startTime = Time.realtimeSinceStartup;
             yield return Parser(currentCommand);
-            //yield return new WaitForSeconds(timeBetweenCommands);
+            float totalTime = Time.realtimeSinceStartup - startTime;
+            Debug.Log("Time: " + totalTime);
+            if(totalTime < timeBetweenCommands)
+            {
+                yield return new WaitForSeconds(timeBetweenCommands - totalTime);
+            }
+            
         } while (currentCommand != null && currentCommand.command != "End of script");
 
         ResetRobot();
@@ -115,6 +125,16 @@ public class EvaRobotControll : MonoBehaviour
             case APIComunication.CommandMotionJson motionCommand:
                 if (motionController != null)
                     yield return StartCoroutine(motionController.Motion(motionCommand.member, motionCommand.direction));
+                break;
+            
+            case APIComunication.CommandListenJson commandListenJson:
+                if (listenController != null)
+                {
+                    string listenResult = "";
+                    yield return StartCoroutine(listenController.StartRecording((result) => { listenResult = result; }));
+                    yield return StartCoroutine(webCommunication.SendInput(listenResult));
+                    Debug.Log(listenResult);
+                }
                 break;
         }
 

@@ -1,15 +1,16 @@
+using System;
 using System.Collections;
 using TMPro;
 using UnityEditor.PackageManager.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class InputController : MonoBehaviour
+public class ListenController : MonoBehaviour
 {
     public APIComunication api;
     [SerializeField] private TextMeshProUGUI textMeshProUGUI;
     [SerializeField] private TMP_Dropdown drop;
-    [SerializeField] private Button button;
+    [SerializeField] private GameObject listeningActive;
 
     [SerializeField] private float silent_threshold; 
 
@@ -47,7 +48,7 @@ public class InputController : MonoBehaviour
         else
         {
 
-            StartCoroutine(StartRecording());
+            StartCoroutine(StartRecording(null));
         }
     }
 
@@ -70,8 +71,9 @@ public class InputController : MonoBehaviour
         return sample_sum / sampleWindow;
     }
 
-    private IEnumerator StartRecording()
+    public IEnumerator StartRecording(Action<string> result)
     {
+        listeningActive.SetActive(true);
         AudioClip audioClip = Microphone.Start(selectedDevice, false, 30, 16000);
 
         int lastMicPos = 0; 
@@ -86,6 +88,7 @@ public class InputController : MonoBehaviour
                 StopRecording();
             }
         }
+        listeningActive.SetActive(false);
 
         float[] data = new float[lastMicPos];
         audioClip.GetData(data, 0);
@@ -93,7 +96,7 @@ public class InputController : MonoBehaviour
         
         trimm.SetData(data, 0);
 
-        api.StartSTT(trimm); 
+        yield return api.GetSTT(trimm, result);
         StopAllCoroutines();
     }
 

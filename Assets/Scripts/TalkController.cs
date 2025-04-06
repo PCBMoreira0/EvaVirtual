@@ -34,14 +34,20 @@ public class TalkController : MonoBehaviour
         if (audioSource != null)
         {
             audioSource.PlayOneShot(audioClip);
+            dialogueBox.SetText(text);
+            yield return new WaitForSeconds(audioClip.length);
         }
 
     }
     public IEnumerator Talk(string text)
     {
-        if(tts_enabled)
+        if (tts_enabled)
+        {
             yield return StartCoroutine(PlayTTS(text));
-
-        dialogueBox.SetText(text);
+        }
+        else
+        {
+            dialogueBox.SetText(text);
+        }
     }
 }
