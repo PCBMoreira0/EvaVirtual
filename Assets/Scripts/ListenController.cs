@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
+using System.Data.SqlTypes;
 using TMPro;
 using UnityEditor.PackageManager.UI;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class ListenController : MonoBehaviour
@@ -11,11 +13,12 @@ public class ListenController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textMeshProUGUI;
     [SerializeField] private TMP_Dropdown drop;
     [SerializeField] private GameObject listeningActive;
+    [SerializeField] private TMP_InputField listenInputField;
+    [SerializeField] private Toggle keyboardToggle;
 
     [SerializeField] private float silent_threshold; 
 
     private string selectedDevice = "";
-    public RunWhisper runWhisper;
 
     private void Start()
     {
@@ -36,6 +39,36 @@ public class ListenController : MonoBehaviour
     public void ChangeDeviceFromDropDown(int value)
     {
         selectedDevice = drop.options[value].text;
+    }
+
+    public IEnumerator StartListening(Action<string> result)
+    {
+        
+        if(keyboardToggle.isOn)
+        {
+            yield return StartCoroutine(GetKeyboardInput(result));
+        }
+        else
+        {
+            yield return StartCoroutine(StartRecording(result));
+        }
+    }
+
+    private IEnumerator GetKeyboardInput(Action<string> result)
+    {
+        listenInputField.gameObject.SetActive(true);
+
+        string input = "";
+        bool eventHappen = false;
+        listenInputField.text = "";
+        UnityAction<string> action = (string inputText) => { input = inputText; eventHappen = true; };
+        listenInputField.onEndEdit.AddListener(action);
+        yield return new WaitUntil(() => eventHappen);
+
+        listenInputField.onEndEdit.RemoveListener(action);
+
+        result?.Invoke(input);
+        listenInputField.gameObject.SetActive(false);
     }
 
     public void TurnMicrophone()
@@ -71,7 +104,7 @@ public class ListenController : MonoBehaviour
         return sample_sum / sampleWindow;
     }
 
-    public IEnumerator StartRecording(Action<string> result)
+    private IEnumerator StartRecording(Action<string> result)
     {
         listeningActive.SetActive(true);
         AudioClip audioClip = Microphone.Start(selectedDevice, false, 30, 16000);

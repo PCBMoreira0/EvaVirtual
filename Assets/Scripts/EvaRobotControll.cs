@@ -69,17 +69,17 @@ public class EvaRobotControll : MonoBehaviour
 
     IEnumerator Stop()
     {
-        StopAllCoroutines();
         webCommunication.StopAllCoroutines();
         talkController.StopAllCoroutines();
         yield return StartCoroutine(webCommunication.DeleteSimulator());
         yield return StartCoroutine(ResetRobot());
+        StopAllCoroutines();
     }
 
     private IEnumerator ResetRobot()
     {
-        yield return motionController.ResetPosition();
-        emotionController.ChangeEmotion(EmotionType.NEUTRAL);
+        yield return StartCoroutine(motionController.ResetPosition());
+        yield return StartCoroutine(emotionController.ChangeEmotion(EmotionType.NEUTRAL));
         talkController.ResetDialogueBox();
         OnSimulationEnded?.Invoke();
     }
@@ -93,7 +93,7 @@ public class EvaRobotControll : MonoBehaviour
             float startTime = Time.realtimeSinceStartup;
             yield return Parser(currentCommand);
             float totalTime = Time.realtimeSinceStartup - startTime;
-            Debug.Log("Time: " + totalTime);
+
             if(totalTime < timeBetweenCommands)
             {
                 yield return new WaitForSeconds(timeBetweenCommands - totalTime);
@@ -119,7 +119,7 @@ public class EvaRobotControll : MonoBehaviour
 
             case APIComunication.CommandEmotionJson emotionCommand:
                 if (emotionController != null)
-                    yield return StartCoroutine(emotionController.ChangeEmotion_routine(Enum.Parse<EmotionType>(emotionCommand.emotion)));
+                    yield return StartCoroutine(emotionController.ChangeEmotion(Enum.Parse<EmotionType>(emotionCommand.emotion)));
                 break;
 
             case APIComunication.CommandMotionJson motionCommand:
@@ -131,7 +131,7 @@ public class EvaRobotControll : MonoBehaviour
                 if (listenController != null)
                 {
                     string listenResult = "";
-                    yield return StartCoroutine(listenController.StartRecording((result) => { listenResult = result; }));
+                    yield return StartCoroutine(listenController.StartListening((result) => { listenResult = result; }));
                     yield return StartCoroutine(webCommunication.SendInput(listenResult));
                     Debug.Log(listenResult);
                 }

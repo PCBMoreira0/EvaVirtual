@@ -44,13 +44,14 @@ public class EmotionController : MonoBehaviour
         emotions[6] = sad;
         emotions[7] = surprise;
     }
-    public void ChangeEmotion(EmotionType newEmotion)
+    public IEnumerator ChangeEmotion(EmotionType newEmotion)
     {
         currentEmotion = newEmotion;  
         screen.materials[1].SetTexture("_BaseMap", emotions[(int)newEmotion]);
+        yield return null;
     }
 
-    public IEnumerator ChangeEmotion_routine(EmotionType newEmotion)
+    public IEnumerator ChangeEmotion_Anim(EmotionType newEmotion)
     {
         int current_index = (int)currentEmotion;
         int dir = (int)Mathf.Sign((int)newEmotion - (int)currentEmotion);
@@ -60,6 +61,6 @@ public class EmotionController : MonoBehaviour
             yield return new WaitForSeconds(transitionTime);
         }
 
-        ChangeEmotion(newEmotion);
+        yield return StartCoroutine(ChangeEmotion(newEmotion));
     }
 }
