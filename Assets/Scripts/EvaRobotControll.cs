@@ -13,6 +13,8 @@ public class EvaRobotControll : MonoBehaviour
     [SerializeField] private APIComunication webCommunication;
     [SerializeField] private float timeBetweenCommands = 2f;
 
+    [SerializeField] private AudioSource audioSource;
+
     #region Events
     public UnityEvent<APIComunication.CommandJson> OnCommandReceived;
     public UnityEvent OnSimulationStarted;
@@ -33,6 +35,7 @@ public class EvaRobotControll : MonoBehaviour
         emotionController = GetComponent<EmotionController>();
         motionController = GetComponent<MotionController>();
         listenController = GetComponent<ListenController>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     private void OnEnable()
@@ -136,10 +139,27 @@ public class EvaRobotControll : MonoBehaviour
                     Debug.Log(listenResult);
                 }
                 break;
+
+            case APIComunication.CommandAudioJson commandAudioJson:
+                yield return PlayAudio(commandAudioJson.file);
+                break;
         }
 
         OnCommandReceived?.Invoke(command);
         yield return null;
+    }
+
+    private IEnumerator PlayAudio(string name)
+    {
+        AudioClip audioClip = null;
+        Debug.Log("chegou aqui");
+        yield return webCommunication.GetAudio(name, (AudioClip clip) => { audioClip = clip; });
+        Debug.Log("terminou, " +  audioClip);
+        if(audioClip != null)
+        {
+            audioSource.PlayOneShot(audioClip);
+            yield return new WaitForSeconds(audioClip.length);
+        }
     }
 
     private void OnApplicationQuit()

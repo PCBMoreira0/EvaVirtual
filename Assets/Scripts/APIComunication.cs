@@ -175,6 +175,9 @@ public class APIComunication : MonoBehaviour
                         case "Listen":
                             c = JsonUtility.FromJson<CommandListenJson>(a);
                             break;
+                        case "Audio":
+                            c = JsonUtility.FromJson<CommandAudioJson>(a);
+                            break;
                     }
 
                     result?.Invoke(c);
@@ -258,6 +261,24 @@ public class APIComunication : MonoBehaviour
             {
                 Debug.LogError("Speech To Text: Json returns null.");
             }
+        }
+    }
+
+    public IEnumerator GetAudio(string text, Action<AudioClip> result)
+    {
+        using (var web = UnityWebRequest.Get($"{defaultUri}/sim/audio/{text}"))
+        {
+            web.downloadHandler = new DownloadHandlerAudioClip(web.uri, AudioType.WAV);
+
+            yield return web.SendWebRequest();
+
+            if (web.result != UnityWebRequest.Result.Success)
+            {
+                Debug.Log("ERROR: " + web.error);
+                yield break;
+            }
+            DownloadHandlerAudioClip dhandler = (DownloadHandlerAudioClip)web.downloadHandler;
+            result?.Invoke(dhandler.audioClip);
         }
     }
 
