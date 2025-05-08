@@ -14,8 +14,6 @@ public class APIComunication : MonoBehaviour
 
     public event Action OnInitializationComplete;
 
-    public AudioClip audioCliper;
-
     private class InitEndpoint
     {
         public string uuid;
@@ -49,6 +47,8 @@ public class APIComunication : MonoBehaviour
     public class CommandEmotionJson : CommandJson { public string emotion; }
     public class CommandMotionJson : CommandJson { public string member; public string direction; }
     public class CommandListenJson : CommandJson { public string state; }
+    public class CommandQRCodeJson : CommandJson { }
+    public class CommandUserEmotionJson : CommandJson { }
     #endregion
 
     public class InputField
@@ -60,7 +60,7 @@ public class APIComunication : MonoBehaviour
         }
     }
 
-    public class STTField
+    public class AIResultField
     {
         public string result = "";
     }
@@ -178,6 +178,12 @@ public class APIComunication : MonoBehaviour
                         case "Audio":
                             c = JsonUtility.FromJson<CommandAudioJson>(a);
                             break;
+                        case "QR_Read":
+                            c = JsonUtility.FromJson<CommandQRCodeJson>(a);
+                            break;
+                        case "User_emotion":
+                            c = JsonUtility.FromJson<CommandUserEmotionJson>(a);
+                            break;
                     }
 
                     result?.Invoke(c);
@@ -232,7 +238,7 @@ public class APIComunication : MonoBehaviour
     {
         WWWForm www = new WWWForm();
         var b = AudioOperations.ConvertAudioClipToWav(clip);
-        www.AddBinaryData("file", b, "audiooo.wav", "audio/wav");
+        www.AddBinaryData("file", b, "audio.wav", "audio/wav");
 
         using (var web = UnityWebRequest.Post($"{defaultUri}/sim/stt", www))
         {
@@ -249,7 +255,7 @@ public class APIComunication : MonoBehaviour
             {
                 try
                 {
-                    var c = JsonUtility.FromJson<STTField>(a);
+                    var c = JsonUtility.FromJson<AIResultField>(a);
                     result?.Invoke(c.result);
                 }
                 catch (Exception e)
@@ -279,6 +285,42 @@ public class APIComunication : MonoBehaviour
             }
             DownloadHandlerAudioClip dhandler = (DownloadHandlerAudioClip)web.downloadHandler;
             result?.Invoke(dhandler.audioClip);
+        }
+    }
+
+    public IEnumerator GetEmotion(Texture2D image, Action<string> result)
+    {
+        WWWForm www = new WWWForm();
+        var b = image.EncodeToPNG();
+        www.AddBinaryData("file", b, "image.png", "image/png");
+
+        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/emotion", www))
+        {
+            yield return web.SendWebRequest();
+
+            if (web.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError(web.error);
+                yield break;
+            }
+            string a = web.downloadHandler.text;
+
+            if (!string.IsNullOrEmpty(a))
+            {
+                try
+                {
+                    var c = JsonUtility.FromJson<AIResultField>(a);
+                    result?.Invoke(c.result);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Erro ao fazer parse do json: {e.Message}");
+                }
+            }
+            else
+            {
+                Debug.LogError("Emotion Recognition: Json returns null.");
+            }
         }
     }
 

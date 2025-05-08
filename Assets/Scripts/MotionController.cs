@@ -126,7 +126,7 @@ public class MotionController : MonoBehaviour
         float time = motionConfigurations.twoUpDown_degree / turnSpeed;
         while (currentTime < time)
         {
-            head.Rotate(motionConfigurations.twoUpDown_degree * Time.deltaTime, 0, 0);
+            head.Rotate(-motionConfigurations.twoUpDown_degree * Time.deltaTime, 0, 0);
 
             currentTime += Time.deltaTime;
             yield return new WaitForEndOfFrame();
@@ -139,7 +139,7 @@ public class MotionController : MonoBehaviour
         float time = motionConfigurations.twoUpDown_degree / turnSpeed;
         while (currentTime < time)
         {
-            head.Rotate(-motionConfigurations.twoUpDown_degree * Time.deltaTime, 0, 0);
+            head.Rotate(motionConfigurations.twoUpDown_degree * Time.deltaTime, 0, 0);
 
             currentTime += Time.deltaTime;
             yield return new WaitForEndOfFrame();

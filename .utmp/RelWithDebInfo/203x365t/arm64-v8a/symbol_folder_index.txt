@@ -1,0 +1,1 @@
+D:\Pedro\Documents\UFF\Robo\EvaVirtual\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\build\intermediates\cxx\RelWithDebInfo\203x365t\obj\arm64-v8a

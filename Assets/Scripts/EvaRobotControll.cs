@@ -15,6 +15,12 @@ public class EvaRobotControll : MonoBehaviour
 
     [SerializeField] private AudioSource audioSource;
 
+    #region CameraModes
+    private Vector3 originalCameraPosition;
+    [SerializeField] private Vector3 cameraModeCameraPosition;
+    [SerializeField] private float viewTransitionDuration = 2f; 
+    #endregion
+
     #region Events
     public UnityEvent<APIComunication.CommandJson> OnCommandReceived;
     public UnityEvent OnSimulationStarted;
@@ -27,6 +33,8 @@ public class EvaRobotControll : MonoBehaviour
     private EmotionController emotionController;
     private MotionController motionController;
     private ListenController listenController;
+    private UserEmotionController userEmotionController;
+    private QRCodeController qrCodeController;
     #endregion
 
     private void Awake()
@@ -36,6 +44,13 @@ public class EvaRobotControll : MonoBehaviour
         motionController = GetComponent<MotionController>();
         listenController = GetComponent<ListenController>();
         audioSource = GetComponent<AudioSource>();
+        userEmotionController = GetComponent<UserEmotionController>();
+        qrCodeController = GetComponent<QRCodeController>();
+    }
+
+    private void Start()
+    {
+        originalCameraPosition = Camera.main.transform.position;
     }
 
     private void OnEnable()
@@ -143,6 +158,19 @@ public class EvaRobotControll : MonoBehaviour
             case APIComunication.CommandAudioJson commandAudioJson:
                 yield return PlayAudio(commandAudioJson.file);
                 break;
+
+            case APIComunication.CommandQRCodeJson commandQRCodeJson:
+                string qrResult = ""; 
+                yield return StartCoroutine(qrCodeController.Scan((result) => { qrResult = result; }));
+                yield return StartCoroutine(webCommunication.SendInput(qrResult));
+                break;
+
+            case APIComunication.CommandUserEmotionJson commandUserEmotionJson:
+                string emotionResult = "";
+                yield return StartCoroutine(userEmotionController.ScanEmotion((result) => { emotionResult =  result; }));   
+                yield return StartCoroutine(webCommunication.SendInput(emotionResult));
+                Debug.Log(emotionResult);
+                break;
         }
 
         OnCommandReceived?.Invoke(command);
@@ -160,6 +188,66 @@ public class EvaRobotControll : MonoBehaviour
             audioSource.PlayOneShot(audioClip);
             yield return new WaitForSeconds(audioClip.length);
         }
+    }
+
+   public enum VIEWS
+    {
+        NORMAL,
+        CAMERA,
+        MICROPHONE
+    }
+    public void TransitionView(VIEWS newView)
+    {
+        switch (newView) 
+        {
+            case VIEWS.NORMAL:
+                StartCoroutine(NormalModeTransition());
+                break;
+            case VIEWS.CAMERA:
+                StartCoroutine(CameraModeTransition());
+                break;
+        }
+    }
+
+    public void TransitionView(int newView)
+    {
+        switch ((VIEWS)newView)
+        {
+            case VIEWS.NORMAL:
+                StartCoroutine(NormalModeTransition());
+                break;
+            case VIEWS.CAMERA:
+                StartCoroutine(CameraModeTransition());
+                break;
+        }
+    }
+
+    private IEnumerator CameraModeTransition()
+    {
+        float currentTime = 0;
+        StartCoroutine(motionController.Motion("head", MotionTypes.TWO_UP));
+        yield return null;
+        //while (currentTime < viewTransitionDuration)
+        //{
+        //    Camera.main.transform.position = Vector3.Lerp(originalCameraPosition, cameraModeCameraPosition, currentTime / viewTransitionDuration);
+        //    currentTime += Time.deltaTime;
+        //    yield return null;
+        //}
+        //Camera.main.transform.position = cameraModeCameraPosition; 
+    }
+
+    private IEnumerator NormalModeTransition()
+    {
+        float currentTime = 0;
+        StartCoroutine(motionController.Motion("head", MotionTypes.TWO_DOWN));
+
+        while (currentTime < viewTransitionDuration)
+        {
+            Camera.main.transform.position = Vector3.Lerp(cameraModeCameraPosition, originalCameraPosition, currentTime / viewTransitionDuration);
+            currentTime += Time.deltaTime;
+            yield return null;
+        }
+        Camera.main.transform.position = originalCameraPosition;
     }
 
     private void OnApplicationQuit()
