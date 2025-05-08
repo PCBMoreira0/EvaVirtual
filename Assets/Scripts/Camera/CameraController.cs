@@ -9,13 +9,16 @@ using UnityEngine.Events;
 
 public class CameraController : MonoBehaviour
 {
+    public bool IsPlaying { get { return webCamTexture.isPlaying; } }
+    public bool IsCamAvailable { get { return isCamAvailable; } private set { isCamAvailable = value; } }
+
     [SerializeField] private UnityEvent OnCameraActivated;
     [SerializeField] private UnityEvent OnCameraDeactivated;
     [SerializeField] private Vector3 cameraModePosition;
     private Vector3 originalCameraPosition;
-    public bool IsPlaying { get { return webCamTexture.isPlaying; } }
-    public bool IsCamAvailable { get; private set; }
+  
     [SerializeField] private RawImage camViewport;
+    [SerializeField] private bool isCamAvailable = false;
     private WebCamDevice selectedCamera;
     private WebCamTexture webCamTexture;
 
@@ -36,8 +39,8 @@ public class CameraController : MonoBehaviour
 
         IsCamAvailable = true;
 
-        selectedCamera = webCamDevices[0];
-        webCamTexture = new WebCamTexture(webCamDevices[0].name, (int)camViewport.rectTransform.rect.width, (int)camViewport.rectTransform.rect.height);
+        //selectedCamera = GetCameraDevice(false);
+        webCamTexture = new WebCamTexture(GetCamera(false), (int)camViewport.rectTransform.rect.width, (int)camViewport.rectTransform.rect.height);
         camViewport.texture = webCamTexture;
     }
 
@@ -47,15 +50,20 @@ public class CameraController : MonoBehaviour
 
         foreach (var device in WebCamTexture.devices)
         {
+            if (device.name.Contains("OBS")) continue;
+
             if (isFront && device.isFrontFacing)
             {
+                selectedCamera = device;
                 return device.name;
             }
             else if (!isFront && !device.isFrontFacing)
             {
+                selectedCamera = device;
                 return device.name;
             }
         }
+        selectedCamera = WebCamTexture.devices[0];
         return WebCamTexture.devices[0].name;
     }
 

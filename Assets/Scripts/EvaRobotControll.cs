@@ -227,13 +227,13 @@ public class EvaRobotControll : MonoBehaviour
         float currentTime = 0;
         StartCoroutine(motionController.Motion("head", MotionTypes.TWO_UP));
         yield return null;
-        //while (currentTime < viewTransitionDuration)
-        //{
-        //    Camera.main.transform.position = Vector3.Lerp(originalCameraPosition, cameraModeCameraPosition, currentTime / viewTransitionDuration);
-        //    currentTime += Time.deltaTime;
-        //    yield return null;
-        //}
-        //Camera.main.transform.position = cameraModeCameraPosition; 
+        while (currentTime < viewTransitionDuration)
+        {
+            Camera.main.transform.position = Vector3.Lerp(originalCameraPosition, cameraModeCameraPosition, currentTime / viewTransitionDuration);
+            currentTime += Time.deltaTime;
+            yield return null;
+        }
+        Camera.main.transform.position = cameraModeCameraPosition;
     }
 
     private IEnumerator NormalModeTransition()

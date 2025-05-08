@@ -25,7 +25,7 @@ public class QRCodeController : MonoBehaviour
         Result codeResult;
         do
         {
-            yield return null;
+            if(!cameraController.IsCamAvailable) yield break; 
             Texture2D frame = cameraController.GetCameraFrame();
             codeResult = reader.Decode(frame.GetPixels32(), frame.width, frame.height);
             yield return new WaitForSeconds(0.2f);
