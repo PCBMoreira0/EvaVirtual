@@ -22,17 +22,21 @@ public class QRCodeController : MonoBehaviour
     {
         yield return cameraController.StartCamera(false);
         
-        Result codeResult;
+        Result codeResult = null;
         do
         {
-            if(!cameraController.IsCamAvailable) yield break; 
+            if(!cameraController.IsCamAvailable) break;
+
             Texture2D frame = cameraController.GetCameraFrame();
             codeResult = reader.Decode(frame.GetPixels32(), frame.width, frame.height);
             yield return new WaitForSeconds(0.2f);
         } while (codeResult == null);
 
         cameraController.StopCamera();
-        result?.Invoke(codeResult.Text);
+        if (result != null)
+            result?.Invoke(codeResult.Text);
+        else
+            result?.Invoke("");
     }
 
     public void Scann()
