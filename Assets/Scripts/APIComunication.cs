@@ -5,6 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
+using Newtonsoft.Json;
 
 public class APIComunication : MonoBehaviour
 {
@@ -20,6 +21,10 @@ public class APIComunication : MonoBehaviour
     }
 
     #region Json Commands
+    public class CommandListJson
+    {
+        public CommandJson[] commands;
+    }
     public class CommandJson
     {
         public string command;
@@ -157,40 +162,43 @@ public class APIComunication : MonoBehaviour
             {
                 try
                 {
-                    var c = JsonUtility.FromJson<CommandJson>(a);
-
-                    switch (c.command)
+                    var c = JsonUtility.FromJson<CommandListJson>(a);
+                    foreach (var command in c.commands)
                     {
-                        case "Talk":
-                            c = JsonUtility.FromJson<CommandTalkJson>(a);
-                            break;
-                        case "Wait":
-                            c = JsonUtility.FromJson<CommandWaitJson>(a);
-                            break;
-                        case "Emotion":
-                            c = JsonUtility.FromJson<CommandEmotionJson>(a);
-                            break;
-                        case "Motion":
-                            c = JsonUtility.FromJson<CommandMotionJson>(a);
-                            break;
-                        case "Listen":
-                            c = JsonUtility.FromJson<CommandListenJson>(a);
-                            break;
-                        case "Audio":
-                            c = JsonUtility.FromJson<CommandAudioJson>(a);
-                            break;
-                        case "QR_Read":
-                            c = JsonUtility.FromJson<CommandQRCodeJson>(a);
-                            break;
-                        case "User_emotion":
-                            c = JsonUtility.FromJson<CommandUserEmotionJson>(a);
-                            break;
-                        case "Led_animation":
-                            c = JsonUtility.FromJson<CommandLedAnimation>(a);
-                            break;
+                        Debug.Log(command.command);
                     }
+                    //switch (c.command)
+                    //{
+                    //    case "Talk":
+                    //        c = JsonUtility.FromJson<CommandTalkJson>(a);
+                    //        break;
+                    //    case "Wait":
+                    //        c = JsonUtility.FromJson<CommandWaitJson>(a);
+                    //        break;
+                    //    case "Emotion":
+                    //        c = JsonUtility.FromJson<CommandEmotionJson>(a);
+                    //        break;
+                    //    case "Motion":
+                    //        c = JsonUtility.FromJson<CommandMotionJson>(a);
+                    //        break;
+                    //    case "Listen":
+                    //        c = JsonUtility.FromJson<CommandListenJson>(a);
+                    //        break;
+                    //    case "Audio":
+                    //        c = JsonUtility.FromJson<CommandAudioJson>(a);
+                    //        break;
+                    //    case "QR_Read":
+                    //        c = JsonUtility.FromJson<CommandQRCodeJson>(a);
+                    //        break;
+                    //    case "User_emotion":
+                    //        c = JsonUtility.FromJson<CommandUserEmotionJson>(a);
+                    //        break;
+                    //    case "Led_animation":
+                    //        c = JsonUtility.FromJson<CommandLedAnimation>(a);
+                    //        break;
+                    //}
 
-                    result?.Invoke(c);
+                    //result?.Invoke(c);
                 }
                 catch (Exception e)
                 {
