@@ -49,6 +49,7 @@ public class APIComunication : MonoBehaviour
     public class CommandListenJson : CommandJson { public string state; }
     public class CommandQRCodeJson : CommandJson { }
     public class CommandUserEmotionJson : CommandJson { }
+    public class CommandLedAnimation : CommandJson { public string color; }
     #endregion
 
     public class InputField
@@ -183,6 +184,9 @@ public class APIComunication : MonoBehaviour
                             break;
                         case "User_emotion":
                             c = JsonUtility.FromJson<CommandUserEmotionJson>(a);
+                            break;
+                        case "Led_animation":
+                            c = JsonUtility.FromJson<CommandLedAnimation>(a);
                             break;
                     }
 
