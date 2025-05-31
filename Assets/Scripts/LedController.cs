@@ -10,7 +10,25 @@ public class LedController : MonoBehaviour
         switch (color)
         {
             case "green":
-                led.material.SetColor("_Color", Color.green);
+                led.material.color = Color.green;
+                break;
+            case "grey":
+                led.material.color = Color.gray;
+                break;
+            case "blue":
+                led.material.color = Color.blue;
+                break;
+            case "red":
+                led.material.color = Color.red;
+                break;
+            case "yellow":
+                led.material.color = Color.yellow;
+                break;
+            case "white":
+                led.material.color = Color.white;
+                break;
+            case "rainbow":
+                led.material.color = Color.magenta;
                 break;
         }
 

@@ -3482,7 +3482,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   webCommunication: {fileID: 899783275}
-  timeBetweenCommands: 1.4
+  timeBetweenCommands: 2
   audioSource: {fileID: 0}
   cameraModeCameraPosition: {x: 0, y: 0.85, z: -2.31}
   viewTransitionDuration: 1.4
@@ -3868,7 +3868,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c06c1254990de8c47b9cbd71269de919, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  led: {fileID: 0}
+  led: {fileID: 622367279}
 --- !u!1 &920633028
 GameObject:
   m_ObjectHideFlags: 0
@@ -4784,7 +4784,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
-  m_Text: 192.168.1.93:8000
+  m_Text: localhost:8000
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0

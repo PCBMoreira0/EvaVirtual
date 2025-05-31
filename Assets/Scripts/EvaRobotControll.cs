@@ -1,11 +1,9 @@
-using JetBrains.Annotations;
 using System;
 using System.Collections;
-using TMPro;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
+using static Utils.CommandJsonConverter;
 
 [SelectionBase]
 public class EvaRobotControll : MonoBehaviour
@@ -22,7 +20,7 @@ public class EvaRobotControll : MonoBehaviour
     #endregion
 
     #region Events
-    public UnityEvent<APIComunication.CommandJson> OnCommandReceived;
+    public UnityEvent<CommandJson> OnCommandReceived;
     public UnityEvent OnSimulationStarted;
     public UnityEvent OnSimulationEnded;
     #endregion
@@ -35,6 +33,7 @@ public class EvaRobotControll : MonoBehaviour
     private ListenController listenController;
     private UserEmotionController userEmotionController;
     private QRCodeController qrCodeController;
+    private LedController ledController;
     #endregion
 
     private void Awake()
@@ -46,6 +45,7 @@ public class EvaRobotControll : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         userEmotionController = GetComponent<UserEmotionController>();
         qrCodeController = GetComponent<QRCodeController>();
+        ledController = GetComponent<LedController>();
     }
 
     private void Start()
@@ -103,13 +103,21 @@ public class EvaRobotControll : MonoBehaviour
     }
     IEnumerator Execute()
     {
-        APIComunication.CommandJson currentCommand = null;
+        CommandJson[] commandList = null;
         do
         {
-            yield return StartCoroutine(webCommunication.NextCommand((result) => { currentCommand = result; }));
-
+            yield return StartCoroutine(webCommunication.NextCommand((result) => { commandList = result.commands; }));
             float startTime = Time.realtimeSinceStartup;
-            yield return Parser(currentCommand);
+            int coroutinesExecuting = commandList.Length;
+            Action onParserFinish = () => coroutinesExecuting--;
+
+            foreach(var command in commandList)
+            {
+                yield return StartCoroutine(Parser(command, onParserFinish));
+            }
+
+            yield return new WaitUntil(() => coroutinesExecuting == 0);
+
             float totalTime = Time.realtimeSinceStartup - startTime;
 
             if(totalTime < timeBetweenCommands)
@@ -117,35 +125,39 @@ public class EvaRobotControll : MonoBehaviour
                 yield return new WaitForSeconds(timeBetweenCommands - totalTime);
             }
             
-        } while (currentCommand != null && currentCommand.command != "End of script");
+        } while (commandList != null && commandList.Length != 0);
 
         ResetRobot();
 
         yield return StartCoroutine(webCommunication.DeleteSimulator());
     }
 
-    private IEnumerator Parser(APIComunication.CommandJson command)
+    private IEnumerator Parser(CommandJson command, Action onParserFinish)
     {
         if (command == null) yield break;
 
         switch (command)
         {
-            case APIComunication.CommandTalkJson commandTalkJson:
+            case CommandTalkJson commandTalkJson:
+                Debug.Log("entrou");
                 if (talkController != null) 
                     yield return StartCoroutine(talkController.Talk(commandTalkJson.text));
                 break;
 
-            case APIComunication.CommandEmotionJson emotionCommand:
+            case CommandEmotionJson emotionCommand:
                 if (emotionController != null)
                     yield return StartCoroutine(emotionController.ChangeEmotion(Enum.Parse<EmotionType>(emotionCommand.emotion)));
                 break;
 
-            case APIComunication.CommandMotionJson motionCommand:
+            case CommandMotionJson motionCommand:
                 if (motionController != null)
                     yield return StartCoroutine(motionController.Motion(motionCommand.member, motionCommand.direction));
                 break;
-            
-            case APIComunication.CommandListenJson commandListenJson:
+
+            case CommandLedAnimationJson commandLedAnimation: 
+                yield return StartCoroutine(ledController.ChangeLedColor(commandLedAnimation.color));
+                break;
+            case CommandListenJson commandListenJson:
                 if (listenController != null)
                 {
                     string listenResult = "";
@@ -155,17 +167,17 @@ public class EvaRobotControll : MonoBehaviour
                 }
                 break;
 
-            case APIComunication.CommandAudioJson commandAudioJson:
+            case CommandAudioJson commandAudioJson:
                 yield return PlayAudio(commandAudioJson.file);
                 break;
 
-            case APIComunication.CommandQRCodeJson commandQRCodeJson:
+            case CommandQRCodeJson commandQRCodeJson:
                 string qrResult = ""; 
                 yield return StartCoroutine(qrCodeController.Scan((result) => { qrResult = result; }));
                 yield return StartCoroutine(webCommunication.SendInput(qrResult));
                 break;
 
-            case APIComunication.CommandUserEmotionJson commandUserEmotionJson:
+            case CommandUserEmotionJson commandUserEmotionJson:
                 string emotionResult = "";
                 yield return StartCoroutine(userEmotionController.ScanEmotion((result) => { emotionResult =  result; }));   
                 yield return StartCoroutine(webCommunication.SendInput(emotionResult));
@@ -173,6 +185,7 @@ public class EvaRobotControll : MonoBehaviour
                 break;
         }
 
+        onParserFinish?.Invoke();
         OnCommandReceived?.Invoke(command);
         yield return null;
     }

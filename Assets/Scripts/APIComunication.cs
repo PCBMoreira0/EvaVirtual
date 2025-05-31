@@ -1,17 +1,15 @@
 using System;
 using System.Collections;
-using System.IO;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
+using static Utils.CommandJsonConverter;
 
 public class APIComunication : MonoBehaviour
 {
     [SerializeField] private string xml = "teste_EvaML";
     private string uuid = string.Empty;
-    private string defaultUri = "http://192.168.1.93:8000";
+    private string defaultUri = "http://localhost:8000";
 
     public event Action OnInitializationComplete;
 
@@ -19,43 +17,6 @@ public class APIComunication : MonoBehaviour
     {
         public string uuid;
     }
-
-    #region Json Commands
-    public class CommandListJson
-    {
-        public CommandJson[] commands;
-    }
-    public class CommandJson
-    {
-        public string command;
-
-        public static T Parse<T>(CommandJson command) where T : CommandJson
-        {
-            if(command is T converted)
-            {
-                return converted;
-            }
-            else
-            {
-                throw new InvalidCastException($"Cannot cast {command.GetType()} to {typeof(T)}");
-            }
-        }
-    }
-
-    public class CommandAudioJson : CommandJson
-    {
-        public string file;
-        public bool block;
-    }
-    public class CommandTalkJson : CommandJson { public string text; }
-    public class CommandWaitJson : CommandJson { public float wait; }
-    public class CommandEmotionJson : CommandJson { public string emotion; }
-    public class CommandMotionJson : CommandJson { public string member; public string direction; }
-    public class CommandListenJson : CommandJson { public string state; }
-    public class CommandQRCodeJson : CommandJson { }
-    public class CommandUserEmotionJson : CommandJson { }
-    public class CommandLedAnimation : CommandJson { public string color; }
-    #endregion
 
     public class InputField
     {
@@ -145,7 +106,7 @@ public class APIComunication : MonoBehaviour
         OnInitializationComplete?.Invoke();
     }
 
-    public IEnumerator NextCommand(Action<CommandJson> result)
+    public IEnumerator NextCommand(Action<CommandListJson> result)
     {
         using (var web = UnityWebRequest.Post($"{defaultUri}/sim/next/{uuid}", "", "application/Json"))
         {
@@ -162,43 +123,9 @@ public class APIComunication : MonoBehaviour
             {
                 try
                 {
-                    var c = JsonUtility.FromJson<CommandListJson>(a);
-                    foreach (var command in c.commands)
-                    {
-                        Debug.Log(command.command);
-                    }
-                    //switch (c.command)
-                    //{
-                    //    case "Talk":
-                    //        c = JsonUtility.FromJson<CommandTalkJson>(a);
-                    //        break;
-                    //    case "Wait":
-                    //        c = JsonUtility.FromJson<CommandWaitJson>(a);
-                    //        break;
-                    //    case "Emotion":
-                    //        c = JsonUtility.FromJson<CommandEmotionJson>(a);
-                    //        break;
-                    //    case "Motion":
-                    //        c = JsonUtility.FromJson<CommandMotionJson>(a);
-                    //        break;
-                    //    case "Listen":
-                    //        c = JsonUtility.FromJson<CommandListenJson>(a);
-                    //        break;
-                    //    case "Audio":
-                    //        c = JsonUtility.FromJson<CommandAudioJson>(a);
-                    //        break;
-                    //    case "QR_Read":
-                    //        c = JsonUtility.FromJson<CommandQRCodeJson>(a);
-                    //        break;
-                    //    case "User_emotion":
-                    //        c = JsonUtility.FromJson<CommandUserEmotionJson>(a);
-                    //        break;
-                    //    case "Led_animation":
-                    //        c = JsonUtility.FromJson<CommandLedAnimation>(a);
-                    //        break;
-                    //}
+                    CommandListJson commandListJson = JsonConvert.DeserializeObject<CommandListJson>(a);
 
-                    //result?.Invoke(c);
+                    result?.Invoke(commandListJson);
                 }
                 catch (Exception e)
                 {
