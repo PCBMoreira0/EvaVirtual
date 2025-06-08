@@ -38,7 +38,7 @@ public class MotionController : MonoBehaviour
     public void DebugMotion()
     {
         //StartCoroutine(Motion("head", MotionTypes.NO));
-        StartCoroutine(ResetPosition());
+        StartCoroutine(Motion("head", "YES"));
     }
 
     public IEnumerator Motion(string member, string type)

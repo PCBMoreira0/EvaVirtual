@@ -24,13 +24,14 @@ namespace Utils
             public bool block;
         }
         public class CommandTalkJson : CommandJson { public string text; }
-        public class CommandWaitJson : CommandJson { public float wait; }
+        public class CommandWaitJson : CommandJson { public float time; }
         public class CommandEmotionJson : CommandJson { public string emotion; }
         public class CommandMotionJson : CommandJson { public string member; public string direction; }
         public class CommandListenJson : CommandJson { public string state; }
         public class CommandQRCodeJson : CommandJson { }
         public class CommandUserEmotionJson : CommandJson { }
         public class CommandLedAnimationJson : CommandJson { public string color; }
+        public class CommandLightJson : CommandJson { public string color; public string state; }
         #endregion
 
         public override bool CanWrite { get { return false; } }
@@ -73,6 +74,9 @@ namespace Utils
                     break;
                 case "Led_animation":
                     commandJson = new CommandLedAnimationJson();
+                    break;
+                case "Light":
+                    commandJson = new CommandLightJson();
                     break;
             }
 

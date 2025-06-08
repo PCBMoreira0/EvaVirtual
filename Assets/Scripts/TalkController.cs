@@ -7,6 +7,7 @@ public class TalkController : MonoBehaviour
     [SerializeField] private ChangeDialogue dialogueBox;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private APIComunication api;
+    [SerializeField] private float noTTSTalkingDuration = 2f;
 
     private bool tts_enabled = true;
 
@@ -48,6 +49,7 @@ public class TalkController : MonoBehaviour
         else
         {
             dialogueBox.SetText(text);
+            yield return new WaitForSeconds(noTTSTalkingDuration);
         }
     }
 }

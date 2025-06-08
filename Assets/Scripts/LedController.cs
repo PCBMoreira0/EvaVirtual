@@ -5,6 +5,11 @@ public class LedController : MonoBehaviour
 {
     [SerializeField] private Renderer led;
 
+    public void ResetColor()
+    {
+        led.material.color = Color.white;
+    }
+
     public IEnumerator ChangeLedColor(string color)
     {
         switch (color)
