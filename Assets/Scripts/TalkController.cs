@@ -32,11 +32,16 @@ public class TalkController : MonoBehaviour
     {
         AudioClip audioClip = null;
         yield return StartCoroutine(api.GetTTS(text, (result) => { audioClip = result; }));
-        if (audioSource != null)
+        if (audioClip != null && audioSource != null)
         {
             audioSource.PlayOneShot(audioClip);
             dialogueBox.SetText(text);
             yield return new WaitForSeconds(audioClip.length);
+        }
+        else
+        {
+            dialogueBox.SetText(text);
+            yield return new WaitForSeconds(noTTSTalkingDuration);
         }
 
     }

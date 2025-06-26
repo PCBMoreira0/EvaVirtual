@@ -157,9 +157,9 @@ public class APIComunication : MonoBehaviour
     public IEnumerator GetTTS(string text, Action<AudioClip> result)
     {
         InputField input = new InputField(text);
-        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/tts/inference", JsonUtility.ToJson(input), "application/Json"))
+        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/tts/", JsonUtility.ToJson(input), "application/Json"))
         {
-            web.downloadHandler = new DownloadHandlerAudioClip(web.uri, AudioType.WAV);
+            web.downloadHandler = new DownloadHandlerAudioClip(web.uri, AudioType.MPEG);
 
             yield return web.SendWebRequest();
 
