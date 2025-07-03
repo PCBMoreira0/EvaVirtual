@@ -16,7 +16,8 @@ public class CameraController : MonoBehaviour
     [SerializeField] private UnityEvent OnCameraDeactivated;
     [SerializeField] private Vector3 cameraModePosition;
     private Vector3 originalCameraPosition;
-  
+
+    [SerializeField] private GameObject camObject;
     [SerializeField] private RawImage camViewport;
     [SerializeField] private bool isCamAvailable = false;
     private WebCamDevice selectedCamera;
@@ -26,6 +27,8 @@ public class CameraController : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     IEnumerator Start()
     {
+        camViewport = camObject.GetComponentInChildren<RawImage>(true);
+
         originalCameraPosition = Camera.main.transform.localPosition;
 
         yield return Application.RequestUserAuthorization(UserAuthorization.WebCam);
@@ -37,9 +40,12 @@ public class CameraController : MonoBehaviour
             yield break;
         }
 
+        for (int i = 0; i < webCamDevices.Length; i++)
+        {
+            Debug.Log(webCamDevices[i].name);
+        }
         IsCamAvailable = true;
 
-        //selectedCamera = GetCameraDevice(false);
         webCamTexture = new WebCamTexture(GetCamera(false), (int)camViewport.rectTransform.rect.width, (int)camViewport.rectTransform.rect.height);
         camViewport.texture = webCamTexture;
     }
@@ -67,6 +73,11 @@ public class CameraController : MonoBehaviour
         return WebCamTexture.devices[0].name;
     }
 
+    public void StartCam()
+    {
+        StartCoroutine(StartCamera(true));
+    }
+
     public IEnumerator StartCamera(bool isFrontCamera) 
     {
         if (!IsCamAvailable) yield break;
@@ -81,7 +92,7 @@ public class CameraController : MonoBehaviour
         camViewport.rectTransform.localEulerAngles = new Vector3(0, 0, -webCamTexture.videoRotationAngle);
 
         Camera.main.transform.localPosition = cameraModePosition;
-        camViewport.gameObject.SetActive(true);
+        camObject.gameObject.SetActive(true);
     }
     
     public Texture2D GetCameraFrame()
@@ -97,7 +108,7 @@ public class CameraController : MonoBehaviour
         webCamTexture.Stop();
 
         Camera.main.transform.localPosition = originalCameraPosition;
-        camViewport.gameObject.SetActive(false);
+        camObject.gameObject.SetActive(false);
 
         OnCameraDeactivated?.Invoke();
     }

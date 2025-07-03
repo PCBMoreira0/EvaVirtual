@@ -3,12 +3,7 @@ using UnityEngine;
 
 public class ChangeDialogue : MonoBehaviour
 {
-    private TextMeshProUGUI textMesh;
-
-    private void Awake()
-    {
-        this.textMesh = GetComponentInChildren<TextMeshProUGUI>();
-    }
+    [SerializeField] private TextMeshProUGUI textMesh;
 
     public void SetText(string text)
     {

@@ -4,39 +4,44 @@ using UnityEngine;
 public class LedController : MonoBehaviour
 {
     [SerializeField] private Renderer led;
+    [SerializeField] private float ledIntensity = 1f;
 
     public void ResetColor()
     {
         led.material.color = Color.white;
+        led.material.SetColor("_EmissionColor", Color.white * ledIntensity);
+        led.material.DisableKeyword("_EMISSION");
     }
 
     public IEnumerator ChangeLedColor(string color)
     {
+        led.material.color = GetColor(color);
+        led.material.EnableKeyword("_EMISSION");
+        led.material.SetColor("_EmissionColor", GetColor(color) * ledIntensity);
+
+        yield return null;
+    }
+
+    private Color GetColor(string color)
+    {
         switch (color)
         {
             case "green":
-                led.material.color = Color.green;
-                break;
+                return Color.green;
             case "grey":
-                led.material.color = Color.gray;
-                break;
+                return Color.gray;
             case "blue":
-                led.material.color = Color.blue;
-                break;
+                return Color.blue;
             case "red":
-                led.material.color = Color.red;
-                break;
+                return Color.red;
             case "yellow":
-                led.material.color = Color.yellow;
-                break;
+                return Color.yellow;
             case "white":
-                led.material.color = Color.white;
-                break;
+                return Color.white;
             case "rainbow":
-                led.material.color = Color.magenta;
-                break;
+                return Color.magenta;
+            default:
+                return Color.white;
         }
-
-        yield return null;
     }
 }

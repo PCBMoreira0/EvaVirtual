@@ -28,6 +28,17 @@ public class TalkController : MonoBehaviour
         dialogueBox.SetText("");
     }
 
+    private void ShowDialog(string text)
+    {
+        dialogueBox.SetText(text);
+        dialogueBox.gameObject.SetActive(true);
+    }
+
+    private void HideDialog()
+    {
+        dialogueBox.gameObject.SetActive(false);
+    }
+
     public IEnumerator PlayTTS(string text)
     {
         AudioClip audioClip = null;
@@ -35,13 +46,15 @@ public class TalkController : MonoBehaviour
         if (audioClip != null && audioSource != null)
         {
             audioSource.PlayOneShot(audioClip);
-            dialogueBox.SetText(text);
+            ShowDialog(text);
             yield return new WaitForSeconds(audioClip.length);
+            HideDialog();
         }
         else
         {
-            dialogueBox.SetText(text);
+            ShowDialog(text);
             yield return new WaitForSeconds(noTTSTalkingDuration);
+            HideDialog();
         }
 
     }
