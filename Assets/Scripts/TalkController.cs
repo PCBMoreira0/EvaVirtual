@@ -25,7 +25,7 @@ public class TalkController : MonoBehaviour
 
     public void ResetDialogueBox()
     {
-        dialogueBox.SetText("");
+        HideDialog();
     }
 
     private void ShowDialog(string text)
@@ -66,7 +66,7 @@ public class TalkController : MonoBehaviour
         }
         else
         {
-            dialogueBox.SetText(text);
+            ShowDialog(text);
             yield return new WaitForSeconds(noTTSTalkingDuration);
         }
     }

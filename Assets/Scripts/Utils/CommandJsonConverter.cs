@@ -32,6 +32,7 @@ namespace Utils
         public class CommandUserEmotionJson : CommandJson { }
         public class CommandLedAnimationJson : CommandJson { public string color; }
         public class CommandLightJson : CommandJson { public string color; public string state; }
+        public class CommandEndJson : CommandJson { }
         #endregion
 
         public override bool CanWrite { get { return false; } }
@@ -77,6 +78,9 @@ namespace Utils
                     break;
                 case "Light":
                     commandJson = new CommandLightJson();
+                    break;
+                case "End":
+                    commandJson = new CommandEndJson();
                     break;
             }
 

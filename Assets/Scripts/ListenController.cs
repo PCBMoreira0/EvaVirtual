@@ -10,7 +10,6 @@ public class ListenController : MonoBehaviour
     public APIComunication api;
     [SerializeField] private TextMeshProUGUI textMeshProUGUI;
     [SerializeField] private TMP_Dropdown drop;
-    [SerializeField] private GameObject listeningActive;
     [SerializeField] private TMP_InputField listenInputField;
     [SerializeField] private Toggle keyboardToggle;
 
@@ -104,7 +103,6 @@ public class ListenController : MonoBehaviour
 
     private IEnumerator StartRecording(Action<string> result)
     {
-        listeningActive.SetActive(true);
         AudioClip audioClip = Microphone.Start(selectedDevice, false, 30, 16000);
 
         int lastMicPos = 0; 
@@ -119,7 +117,6 @@ public class ListenController : MonoBehaviour
                 StopRecording();
             }
         }
-        listeningActive.SetActive(false);
 
         float[] data = new float[lastMicPos];
         audioClip.GetData(data, 0);

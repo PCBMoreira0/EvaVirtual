@@ -1,0 +1,1 @@
+C:\Users\Laboratorio Midiacom\Documents\ProjetosUnity\EvaVirtual\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\build\intermediates\cxx\RelWithDebInfo\636s4k6y\obj\arm64-v8a

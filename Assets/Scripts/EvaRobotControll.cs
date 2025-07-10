@@ -101,12 +101,14 @@ public class EvaRobotControll : MonoBehaviour
         yield return StartCoroutine(motionController.ResetPosition());
         yield return StartCoroutine(emotionController.ChangeEmotion(EmotionType.NEUTRAL));
         talkController.ResetDialogueBox();
+        ledController.ResetColor();
         OnSimulationEnded?.Invoke();
     }
     IEnumerator Execute()
     {
         CommandJson[] commandList = null;
         bool block = true;
+        bool finished = false;
         do
         {
             yield return StartCoroutine(webCommunication.NextCommand((result) => { commandList = result.commands; }));
@@ -118,7 +120,16 @@ public class EvaRobotControll : MonoBehaviour
 
             foreach(var command in commandList)
             {
-                yield return StartCoroutine(Parser(command, onParserFinish));
+                if (command.command.Equals("End"))
+                {
+                    finished = true;
+                    coroutinesExecuting--;
+
+                }
+                else
+                {
+                    yield return StartCoroutine(Parser(command, onParserFinish));
+                }
             }
 
             yield return new WaitUntil(() => coroutinesExecuting == 0);
@@ -130,9 +141,9 @@ public class EvaRobotControll : MonoBehaviour
             //    yield return new WaitForSeconds(timeBetweenCommands - totalTime);
             //}
             
-        } while (commandList != null && commandList.Length != 0);
+        } while (!finished && commandList != null && commandList.Length != 0);
 
-        ResetRobot();
+        yield return StartCoroutine(ResetRobot());
 
         yield return StartCoroutine(webCommunication.DeleteSimulator());
     }
