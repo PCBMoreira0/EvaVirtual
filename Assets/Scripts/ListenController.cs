@@ -38,7 +38,7 @@ public class ListenController : MonoBehaviour
         selectedDevice = drop.options[value].text;
     }
 
-    public IEnumerator StartListening(Action<string> result)
+    public IEnumerator StartListening(Action<string> result, LedController led)
     {
         
         if(keyboardToggle.isOn)
@@ -47,7 +47,7 @@ public class ListenController : MonoBehaviour
         }
         else
         {
-            yield return StartCoroutine(StartRecording(result));
+            yield return StartCoroutine(StartRecording(result, led));
         }
     }
 
@@ -78,7 +78,7 @@ public class ListenController : MonoBehaviour
         else
         {
 
-            StartCoroutine(StartRecording(null));
+            StartCoroutine(StartRecording(null, null));
         }
     }
 
@@ -101,7 +101,13 @@ public class ListenController : MonoBehaviour
         return sample_sum / sampleWindow;
     }
 
-    private IEnumerator StartRecording(Action<string> result)
+    public void StartMiccc()
+    {
+        string result;
+        //StartCoroutine(StartRecording((res) => { result = res; }));
+    }
+
+    private IEnumerator StartRecording(Action<string> result, LedController led)
     {
         AudioClip audioClip = Microphone.Start(selectedDevice, false, 30, 16000);
 
@@ -118,15 +124,17 @@ public class ListenController : MonoBehaviour
             }
         }
 
+        led.ResetColor();
+
         float[] data = new float[lastMicPos];
         audioClip.GetData(data, 0);
         AudioClip trimm = AudioClip.Create("trimmedAudio", lastMicPos, audioClip.channels, audioClip.frequency, false);
         
         trimm.SetData(data, 0);
-
         yield return api.GetSTT(trimm, result);
         StopAllCoroutines();
     }
+
 
     private void StopRecording()
     {

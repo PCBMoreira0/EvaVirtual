@@ -178,7 +178,7 @@ public class EvaRobotControll : MonoBehaviour
                 if (listenController != null)
                 {
                     string listenResult = "";
-                    yield return StartCoroutine(listenController.StartListening((result) => { listenResult = result; }));
+                    yield return StartCoroutine(listenController.StartListening((result) => { listenResult = result; }, ledController));
                     yield return StartCoroutine(webCommunication.SendInput(listenResult));
                     Debug.Log(listenResult);
                 }
