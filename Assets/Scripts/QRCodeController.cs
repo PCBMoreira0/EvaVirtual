@@ -20,7 +20,7 @@ public class QRCodeController : MonoBehaviour
 
     public IEnumerator Scan(Action<string> result)
     {
-        yield return cameraController.StartCamera(false);
+        yield return cameraController.StartCamera(true);
         
         Result codeResult = null;
         do
