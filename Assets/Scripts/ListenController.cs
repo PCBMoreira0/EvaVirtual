@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -12,6 +13,7 @@ public class ListenController : MonoBehaviour
     [SerializeField] private TMP_Dropdown drop;
     [SerializeField] private TMP_InputField listenInputField;
     [SerializeField] private Toggle keyboardToggle;
+    [SerializeField] private TMP_InputField loudneessField;
 
     [SerializeField] private float silent_threshold; 
 
@@ -19,6 +21,9 @@ public class ListenController : MonoBehaviour
 
     private void Start()
     {
+        loudneessField.text = silent_threshold.ToString();
+        loudneessField.onEndEdit.AddListener((string inputText) => { silent_threshold = float.Parse(inputText); Debug.Log("New silent: " + silent_threshold); });
+
         if (Microphone.devices.Length == 0)
         {
             return;
@@ -31,6 +36,14 @@ public class ListenController : MonoBehaviour
 
         drop.RefreshShownValue();
         selectedDevice = drop.options[0].text;
+    }
+
+    public void UpdateLoudnessThreshold(string loudness)
+    {
+        if(float.TryParse(loudness, out float result))
+        {
+            silent_threshold = result;
+        }
     }
 
     public void ChangeDeviceFromDropDown(int value)
@@ -111,16 +124,25 @@ public class ListenController : MonoBehaviour
     {
         AudioClip audioClip = Microphone.Start(selectedDevice, false, 30, 16000);
 
-        int lastMicPos = 0; 
+        int lastMicPos = 0;
+        bool alreadyPassedTheshold = false;
         while (Microphone.IsRecording(selectedDevice))
         {
             yield return new WaitForSeconds(3);
             float loudness = GetLoundnessAverage(audioClip, Microphone.GetPosition(selectedDevice));
             Debug.Log(loudness);
+
             if(loudness <= silent_threshold)
             {
-                lastMicPos = Microphone.GetPosition(selectedDevice);
-                StopRecording();
+                if (alreadyPassedTheshold)
+                {
+                    lastMicPos = Microphone.GetPosition(selectedDevice);
+                    StopRecording();
+                }
+            }
+            else
+            {
+                alreadyPassedTheshold = true;
             }
         }
 

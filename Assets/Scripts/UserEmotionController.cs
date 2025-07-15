@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class UserEmotionController : MonoBehaviour
 {
+    [SerializeField] private float delayBeforeScanning = 1.0f;
+
     private CameraController cameraController;
     private APIComunication api;
 
@@ -16,6 +18,8 @@ public class UserEmotionController : MonoBehaviour
     public IEnumerator ScanEmotion(Action<string> result)
     {
         yield return StartCoroutine(cameraController.StartCamera(true));
+
+        yield return new WaitForSeconds(delayBeforeScanning);
 
         string emotion = "";
         do

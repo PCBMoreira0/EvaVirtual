@@ -53,6 +53,7 @@ public class EvaRobotControll : MonoBehaviour
     private void Start()
     {
         originalCameraPosition = Camera.main.transform.position;
+        Screen.sleepTimeout = SleepTimeout.NeverSleep;
     }
 
     private void OnEnable()
