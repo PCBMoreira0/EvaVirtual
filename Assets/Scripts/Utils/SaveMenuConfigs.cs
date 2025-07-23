@@ -9,7 +9,7 @@ public class SaveMenuConfigs : MonoBehaviour
     [SerializeField] private TMP_InputField serverIP;
     [SerializeField] private Toggle bool_tts;
     [SerializeField] private Toggle bool_keyboard;
-    [SerializeField] private TMP_InputField loudness;
+    [SerializeField] private Slider loudness;
     [SerializeField] private TMP_InputField evaML;
 
     private string serverIPKey = "server_ip";
@@ -21,7 +21,7 @@ public class SaveMenuConfigs : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        Debug.Log(bool_keyboard.isOn);
+        Debug.Log("OIIIII");
         if (PlayerPrefs.HasKey(serverIPKey))
         {
             serverIP.text = PlayerPrefs.GetString(serverIPKey);
@@ -39,8 +39,8 @@ public class SaveMenuConfigs : MonoBehaviour
         }
         if (PlayerPrefs.HasKey(loudnessKey))
         {
-            loudness.text = PlayerPrefs.GetString(loudnessKey);
-            loudness.onEndEdit?.Invoke(loudness.text);
+            loudness.value = PlayerPrefs.GetFloat(loudnessKey);
+            loudness.onValueChanged?.Invoke(loudness.value);
         }
         if(PlayerPrefs.HasKey(evaMLKey))
         {
@@ -51,10 +51,11 @@ public class SaveMenuConfigs : MonoBehaviour
 
     public void SaveConfigs()
     {
+        Debug.Log("SALVEI AQUI SAFADO");
         PlayerPrefs.SetString(serverIPKey, serverIP.text);
         PlayerPrefs.SetString(bool_ttsKey, bool_tts.isOn.ToString());
         PlayerPrefs.SetString(bool_keyboardKey, bool_keyboard.isOn.ToString());
-        PlayerPrefs.SetString(loudnessKey, loudness.text);
+        PlayerPrefs.SetFloat(loudnessKey, loudness.value);
         PlayerPrefs.SetString(evaMLKey, evaML.text);
         PlayerPrefs.Save();
     }

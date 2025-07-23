@@ -103,6 +103,7 @@ public class EvaRobotControll : MonoBehaviour
         yield return StartCoroutine(emotionController.ChangeEmotion(EmotionType.NEUTRAL));
         talkController.ResetDialogueBox();
         ledController.ResetColor();
+        listenController.ResetListen();
         OnSimulationEnded?.Invoke();
     }
     IEnumerator Execute()

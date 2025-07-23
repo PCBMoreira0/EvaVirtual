@@ -13,16 +13,15 @@ public class ListenController : MonoBehaviour
     [SerializeField] private TMP_Dropdown drop;
     [SerializeField] private TMP_InputField listenInputField;
     [SerializeField] private Toggle keyboardToggle;
-    [SerializeField] private TMP_InputField loudneessField;
 
-    [SerializeField] private float silent_threshold; 
+    [SerializeField] private float silent_threshold = 0.05f; 
 
     private string selectedDevice = "";
 
     private void Start()
     {
-        loudneessField.text = silent_threshold.ToString();
-        loudneessField.onEndEdit.AddListener((string inputText) => { silent_threshold = float.Parse(inputText); Debug.Log("New silent: " + silent_threshold); });
+        //    loudneessField.text = silent_threshold.ToString();
+        //    loudneessField.onEndEdit.AddListener((string inputText) => { silent_threshold = float.Parse(inputText); Debug.Log("New silent: " + silent_threshold); });
 
         if (Microphone.devices.Length == 0)
         {
@@ -38,12 +37,9 @@ public class ListenController : MonoBehaviour
         selectedDevice = drop.options[0].text;
     }
 
-    public void UpdateLoudnessThreshold(string loudness)
+    public void UpdateLoudnessThreshold(float loudness)
     {
-        if(float.TryParse(loudness, out float result))
-        {
-            silent_threshold = result;
-        }
+        silent_threshold = loudness;        
     }
 
     public void ChangeDeviceFromDropDown(int value)
@@ -81,6 +77,11 @@ public class ListenController : MonoBehaviour
         listenInputField.gameObject.SetActive(false);
     }
 
+    public void ResetListen()
+    {
+        Microphone.End(selectedDevice);
+    }
+
     public void TurnMicrophone()
     {
         if (Microphone.IsRecording(selectedDevice))
@@ -93,26 +94,7 @@ public class ListenController : MonoBehaviour
 
             StartCoroutine(StartRecording(null, null));
         }
-    }
-
-
-    private float GetLoundnessAverage(AudioClip clip, int micPos)
-    {
-        const int sampleWindow = 3 * 16000;
-        float[] data = new float[sampleWindow];
-        clip.GetData(data, Mathf.Clamp(micPos - sampleWindow, 0, clip.samples-sampleWindow));
-
-
-        // Pesquisar sobre fórmulas para calcular altura do áudio
-
-        float sample_sum = 0;
-        foreach (float audio_sample in data) 
-        {
-            sample_sum += Mathf.Abs(audio_sample);
-        }
-
-        return sample_sum / sampleWindow;
-    }
+    }    
 
     public void StartMiccc()
     {
@@ -122,29 +104,42 @@ public class ListenController : MonoBehaviour
 
     private IEnumerator StartRecording(Action<string> result, LedController led)
     {
-        AudioClip audioClip = Microphone.Start(selectedDevice, false, 30, 16000);
+        AudioClip audioClip = Microphone.Start(selectedDevice, true, 30, 16000);
 
         int lastMicPos = 0;
         bool alreadyPassedTheshold = false;
+
+        const int sampleWindow = 3 * 16000;
+
+        while (Microphone.GetPosition(selectedDevice) < sampleWindow)
+        {
+            yield return null;
+        }
+
         while (Microphone.IsRecording(selectedDevice))
         {
-            yield return new WaitForSeconds(3);
-            float loudness = GetLoundnessAverage(audioClip, Microphone.GetPosition(selectedDevice));
-            Debug.Log(loudness);
+            //float loudness = AudioOperations.GetLoudnessAverage(audioClip, Microphone.GetPosition(selectedDevice), sampleWindow);
+            bool loudness = AudioOperations.IsAnySubwindowLoud(audioClip, Microphone.GetPosition(selectedDevice), sampleWindow, 8000, silent_threshold);
+            Debug.Log("Thesh: " + silent_threshold + " Loud: " + loudness);
 
-            if(loudness <= silent_threshold)
+            if(!loudness) //loudness <= silent_threshold
             {
                 if (alreadyPassedTheshold)
                 {
                     lastMicPos = Microphone.GetPosition(selectedDevice);
                     StopRecording();
+                    break;
                 }
             }
             else
             {
                 alreadyPassedTheshold = true;
             }
+
+            yield return new WaitForSeconds(3);
         }
+
+        while(Microphone.IsRecording(selectedDevice)) yield return null;
 
         led.ResetColor();
 

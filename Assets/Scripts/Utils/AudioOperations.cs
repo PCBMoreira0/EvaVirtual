@@ -1,4 +1,5 @@
 using System.IO;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public static class AudioOperations
@@ -35,5 +36,59 @@ public static class AudioOperations
 
             return stream.ToArray();
         }
+    }
+
+    public static float GetLoudnessAverage(AudioClip clip, int clipPos, int sampleWindow = 64)
+    {
+        // sampleWindow = 3 * 16000;
+
+        int startPosition = clipPos - sampleWindow;
+        if(startPosition < 0)
+        {
+            return 0;
+        }
+
+        float[] data = new float[sampleWindow];
+        clip.GetData(data, startPosition);
+
+        float sample_sum = 0;
+        foreach (float audio_sample in data)
+        {
+            //sample_sum += Mathf.Abs(audio_sample);
+            sample_sum += audio_sample * audio_sample; // RMS
+        }
+
+        return Mathf.Sqrt(sample_sum / sampleWindow);
+    }
+
+    public static bool IsAnySubwindowLoud(AudioClip clip, int endPosition, int totalWindowSize, int subwindowSize, float threshold)
+    {
+        int startPosition = endPosition - totalWindowSize;
+        if (startPosition < 0) return false;
+
+        float[] data = new float[totalWindowSize];
+        clip.GetData(data, startPosition);
+
+        int numSubwindows = totalWindowSize / subwindowSize;
+
+        for (int i = 0; i < numSubwindows; i++)
+        {
+            float sum = 0f;
+            for (int j = 0; j < subwindowSize; j++)
+            {
+                int index = i * subwindowSize + j;
+                var audio_sample = data[index];
+                //sum += Mathf.Abs(data[index]);
+                sum += audio_sample * audio_sample; // RMS
+            }
+
+            float avg = Mathf.Sqrt(sum / subwindowSize);
+            if (avg > threshold)
+            {
+                return true; 
+            }
+        }
+
+        return false;
     }
 }

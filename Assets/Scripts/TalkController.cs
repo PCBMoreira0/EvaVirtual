@@ -16,11 +16,9 @@ public class TalkController : MonoBehaviour
         api = GetComponent<APIComunication>();
     }
 
-    public void EnableTTS()
+    public void EnableTTS(bool value)
     {
-        if (tts_enabled)
-            tts_enabled = false;
-        else tts_enabled = true;
+        tts_enabled = value;
     }
 
     public void ResetDialogueBox()

@@ -1079,6 +1079,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: NewEva
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 4bd1f86b380729243a7fb381ba3c8e2f, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8128795176453009568, guid: 4bd1f86b380729243a7fb381ba3c8e2f, type: 3}
       propertyPath: m_LocalRotation.w
       value: 0.74641037
@@ -1711,8 +1715,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: EVA Virtual
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3768c2f07743dae4e9a476aebaa150f5, type: 2}
-  m_sharedMaterial: {fileID: 6718067798413045388, guid: 3768c2f07743dae4e9a476aebaa150f5, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
