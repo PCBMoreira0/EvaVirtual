@@ -14,7 +14,9 @@ public class ListenController : MonoBehaviour
     [SerializeField] private TMP_InputField listenInputField;
     [SerializeField] private Toggle keyboardToggle;
 
-    [SerializeField] private float silent_threshold = 0.05f; 
+    [SerializeField] private float silent_threshold = 0.05f;
+    [SerializeField] private float windowSize_seconds = 3;
+    [SerializeField] private int subWindowSize = 8000;
 
     private string selectedDevice = "";
 
@@ -109,7 +111,7 @@ public class ListenController : MonoBehaviour
         int lastMicPos = 0;
         bool alreadyPassedTheshold = false;
 
-        const int sampleWindow = 3 * 16000;
+        int sampleWindow = (int)(windowSize_seconds * 16000);
 
         while (Microphone.GetPosition(selectedDevice) < sampleWindow)
         {
@@ -119,7 +121,7 @@ public class ListenController : MonoBehaviour
         while (Microphone.IsRecording(selectedDevice))
         {
             //float loudness = AudioOperations.GetLoudnessAverage(audioClip, Microphone.GetPosition(selectedDevice), sampleWindow);
-            bool loudness = AudioOperations.IsAnySubwindowLoud(audioClip, Microphone.GetPosition(selectedDevice), sampleWindow, 8000, silent_threshold);
+            bool loudness = AudioOperations.IsAnySubwindowLoud(audioClip, Microphone.GetPosition(selectedDevice), sampleWindow, subWindowSize, silent_threshold);
             Debug.Log("Thesh: " + silent_threshold + " Loud: " + loudness);
 
             if(!loudness) //loudness <= silent_threshold
@@ -136,7 +138,7 @@ public class ListenController : MonoBehaviour
                 alreadyPassedTheshold = true;
             }
 
-            yield return new WaitForSeconds(3);
+            yield return new WaitForSeconds(windowSize_seconds);
         }
 
         while(Microphone.IsRecording(selectedDevice)) yield return null;

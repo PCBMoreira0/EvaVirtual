@@ -4695,6 +4695,8 @@ MonoBehaviour:
   listenInputField: {fileID: 746192626}
   keyboardToggle: {fileID: 698841328}
   silent_threshold: 0.05
+  windowSize_seconds: 0.5
+  subWindowSize: 8000
 --- !u!114 &899783284
 MonoBehaviour:
   m_ObjectHideFlags: 0
