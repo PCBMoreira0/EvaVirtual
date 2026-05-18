@@ -13,7 +13,7 @@ public class TalkController : MonoBehaviour
 
     private void Awake()
     {
-        api = GetComponent<APIComunication>();
+        // api = GetComponent<APIComunication>();
     }
 
     public void EnableTTS(bool value)
@@ -40,7 +40,7 @@ public class TalkController : MonoBehaviour
     public IEnumerator PlayTTS(string text)
     {
         AudioClip audioClip = null;
-        yield return StartCoroutine(api.GetTTS(text, (result) => { audioClip = result; }));
+        yield return api.GetTTS(text, (result) => { audioClip = result; });
         if (audioClip != null && audioSource != null)
         {
             audioSource.PlayOneShot(audioClip);
@@ -60,12 +60,13 @@ public class TalkController : MonoBehaviour
     {
         if (tts_enabled)
         {
-            yield return StartCoroutine(PlayTTS(text));
+            yield return PlayTTS(text);
         }
         else
         {
             ShowDialog(text);
             yield return new WaitForSeconds(noTTSTalkingDuration);
+            HideDialog();
         }
     }
 }

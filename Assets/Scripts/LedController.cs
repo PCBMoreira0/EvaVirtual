@@ -26,17 +26,17 @@ public class LedController : MonoBehaviour
     {
         switch (color)
         {
-            case "green":
+            case "LISTEN":
                 return Color.green;
             case "grey":
                 return Color.gray;
-            case "blue":
+            case "SPEAK":
                 return Color.blue;
             case "red":
                 return Color.red;
             case "yellow":
                 return Color.yellow;
-            case "white":
+            case "STOP":
                 return Color.white;
             case "rainbow":
                 return Color.magenta;

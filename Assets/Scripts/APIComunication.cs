@@ -9,7 +9,7 @@ public class APIComunication : MonoBehaviour
 {
     [SerializeField] private string xml = "teste_EvaML";
     private string uuid = string.Empty;
-    private string defaultUri = "http://localhost:8000";
+    private string defaultUri = "http://localhost:8001";
 
     public event Action OnInitializationComplete;
 
@@ -86,7 +86,7 @@ public class APIComunication : MonoBehaviour
 
             if (web.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError(web.error + $"Conteúdo: {web.downloadHandler.text}");
+                Debug.LogError(web.error + $"Conteï¿½do: {web.downloadHandler.text}");
                 yield break;
             }
         }

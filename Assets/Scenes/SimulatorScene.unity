@@ -4177,8 +4177,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 879607380}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.0776, z: -0.0702}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.0776, z: -0.07020001}
   m_LocalScale: {x: 0.5697303, y: 0.15528001, z: 0.5463887}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4303,9 +4303,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 899783276}
-  - component: {fileID: 899783275}
   - component: {fileID: 899783277}
   - component: {fileID: 899783280}
+  - component: {fileID: 899783289}
   - component: {fileID: 899783281}
   - component: {fileID: 899783279}
   - component: {fileID: 899783282}
@@ -4322,19 +4322,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &899783275
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 899783274}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 64c345704c85a724284f468a53b42d91, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  xml: teste_EvaML_en
 --- !u!4 &899783276
 Transform:
   m_ObjectHideFlags: 0
@@ -4365,14 +4352,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f06f0df545d9bb240851b8d8aaaed6de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  webCommunication: {fileID: 899783275}
+  webCommunication: {fileID: 991013074}
   timeBetweenCommands: 2
   audioSource: {fileID: 0}
   cameraModeCameraPosition: {x: 0, y: 0.85, z: -2.31}
   viewTransitionDuration: 1.4
-  OnCommandReceived:
-    m_PersistentCalls:
-      m_Calls: []
   OnSimulationStarted:
     m_PersistentCalls:
       m_Calls:
@@ -4556,7 +4540,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dialogueBox: {fileID: 1939743749}
   audioSource: {fileID: 899783282}
-  api: {fileID: 899783275}
+  api: {fileID: 991013076}
   noTTSTalkingDuration: 2
 --- !u!114 &899783281
 MonoBehaviour:
@@ -4689,7 +4673,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dfab5d1a6615d949850566611aa87eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  api: {fileID: 899783275}
+  api: {fileID: 0}
+  ledController: {fileID: 899783287}
   textMeshProUGUI: {fileID: 282848243}
   drop: {fileID: 501713003}
   listenInputField: {fileID: 746192626}
@@ -4797,6 +4782,20 @@ MonoBehaviour:
   lightChanger:
   - {fileID: 522199756}
   - {fileID: 410087042}
+--- !u!114 &899783289
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 899783274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2947b441624ee942943f25bf1af2045, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  audioSource: {fileID: 899783282}
+  api: {fileID: 991013076}
 --- !u!1 &920633028
 GameObject:
   m_ObjectHideFlags: 0
@@ -5201,6 +5200,65 @@ RectTransform:
   m_AnchoredPosition: {x: -43.688, y: -291}
   m_SizeDelta: {x: 1091.2, y: 81.9977}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &991013073
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 991013075}
+  - component: {fileID: 991013074}
+  - component: {fileID: 991013076}
+  m_Layer: 0
+  m_Name: WebSocketManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &991013074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 991013073}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 972742081b403ba45b3650b23f46f704, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mensagem: '{"command":"audio_response","parameter":""}'
+--- !u!4 &991013075
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 991013073}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.022598986, y: 0.14903684, z: 0.09416859}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &991013076
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 991013073}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64c345704c85a724284f468a53b42d91, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  xml: teste_EvaML
 --- !u!1 &998982032
 GameObject:
   m_ObjectHideFlags: 0
@@ -5872,7 +5930,7 @@ MonoBehaviour:
   m_OnEndEdit:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 899783275}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: APIComunication, Assembly-CSharp
         m_MethodName: UpdateIP
         m_Mode: 0
@@ -6174,7 +6232,7 @@ MonoBehaviour:
   m_OnEndEdit:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 899783275}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: APIComunication, Assembly-CSharp
         m_MethodName: ChangeXML
         m_Mode: 0
@@ -6795,9 +6853,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 899783275}
-        m_TargetAssemblyTypeName: APIComunication, Assembly-CSharp
-        m_MethodName: StartSimulation
+      - m_Target: {fileID: 991013074}
+        m_TargetAssemblyTypeName: WebSocketComunication, Assembly-CSharp
+        m_MethodName: SendWebSocketMessageALONE
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -10266,3 +10324,4 @@ SceneRoots:
   - {fileID: 1575918346}
   - {fileID: 899783276}
   - {fileID: 879607384}
+  - {fileID: 991013075}

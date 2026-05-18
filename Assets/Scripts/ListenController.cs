@@ -9,6 +9,7 @@ using UnityEngine.UI;
 public class ListenController : MonoBehaviour
 {
     public APIComunication api;
+    [SerializeField] private LedController ledController;
     [SerializeField] private TextMeshProUGUI textMeshProUGUI;
     [SerializeField] private TMP_Dropdown drop;
     [SerializeField] private TMP_InputField listenInputField;
@@ -20,6 +21,11 @@ public class ListenController : MonoBehaviour
 
     private string selectedDevice = "";
 
+    void Awake()
+    {
+        ledController = GetComponent<LedController>();
+    }
+    
     private void Start()
     {
         //    loudneessField.text = silent_threshold.ToString();
@@ -49,16 +55,16 @@ public class ListenController : MonoBehaviour
         selectedDevice = drop.options[value].text;
     }
 
-    public IEnumerator StartListening(Action<string> result, LedController led)
+    public IEnumerator StartListening(Action<string> result)
     {
-        
         if(keyboardToggle.isOn)
         {
-            yield return StartCoroutine(GetKeyboardInput(result));
+            yield return GetKeyboardInput(result);
+            ledController.ResetColor();
         }
         else
         {
-            yield return StartCoroutine(StartRecording(result, led));
+            yield return StartRecording(result);
         }
     }
 
@@ -94,7 +100,7 @@ public class ListenController : MonoBehaviour
         else
         {
 
-            StartCoroutine(StartRecording(null, null));
+            StartCoroutine(StartRecording(null));
         }
     }    
 
@@ -104,7 +110,7 @@ public class ListenController : MonoBehaviour
         //StartCoroutine(StartRecording((res) => { result = res; }));
     }
 
-    private IEnumerator StartRecording(Action<string> result, LedController led)
+    private IEnumerator StartRecording(Action<string> result)
     {
         AudioClip audioClip = Microphone.Start(selectedDevice, true, 30, 16000);
 
@@ -143,8 +149,6 @@ public class ListenController : MonoBehaviour
 
         while(Microphone.IsRecording(selectedDevice)) yield return null;
 
-        led.ResetColor();
-
         float[] data = new float[lastMicPos];
         audioClip.GetData(data, 0);
         AudioClip trimm = AudioClip.Create("trimmedAudio", lastMicPos, audioClip.channels, audioClip.frequency, false);
@@ -158,5 +162,6 @@ public class ListenController : MonoBehaviour
     private void StopRecording()
     {
         Microphone.End(selectedDevice);
+        ledController?.ResetColor();
     }
 }

@@ -1,6 +1,9 @@
 using System;
 using System.Collections;
-using UnityEditor;
+using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
+using Unity.Sentis;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 using static Utils.CommandJsonConverter;
@@ -8,19 +11,22 @@ using static Utils.CommandJsonConverter;
 [SelectionBase]
 public class EvaRobotControll : MonoBehaviour
 {
-    [SerializeField] private APIComunication webCommunication;
+    [SerializeField] private WebSocketComunication webCommunication;
     [SerializeField] private float timeBetweenCommands = 2f;
 
     [SerializeField] private AudioSource audioSource;
 
+    private Queue<IEnumerator> commandQueue = new Queue<IEnumerator>();
+    private bool isProcessingCommand = false;
+
+
     #region CameraModes
     private Vector3 originalCameraPosition;
     [SerializeField] private Vector3 cameraModeCameraPosition;
-    [SerializeField] private float viewTransitionDuration = 2f; 
+    [SerializeField] private float viewTransitionDuration = 2f;
     #endregion
 
     #region Events
-    public UnityEvent<CommandJson> OnCommandReceived;
     public UnityEvent OnSimulationStarted;
     public UnityEvent OnSimulationEnded;
     #endregion
@@ -28,6 +34,7 @@ public class EvaRobotControll : MonoBehaviour
 
     #region Controllers
     private TalkController talkController;
+    private AudioController audioController;
     private EmotionController emotionController;
     private MotionController motionController;
     private ListenController listenController;
@@ -40,6 +47,7 @@ public class EvaRobotControll : MonoBehaviour
     private void Awake()
     {
         talkController = GetComponent<TalkController>();
+        audioController = GetComponent<AudioController>();
         emotionController = GetComponent<EmotionController>();
         motionController = GetComponent<MotionController>();
         listenController = GetComponent<ListenController>();
@@ -56,32 +64,32 @@ public class EvaRobotControll : MonoBehaviour
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
     }
 
-    private void OnEnable()
+    void OnDisable()
     {
-        webCommunication.OnInitializationComplete += StartRobot;
+        webCommunication.OnMessageReceived -= OnMessageReceived;
     }
 
-    private void OnDisable()
+    void OnEnable()
     {
-        webCommunication.OnInitializationComplete -= StartRobot;
+        webCommunication.OnMessageReceived += OnMessageReceived;
     }
 
 #if UNITY_EDITOR
     private void Update()
     {
-        if (!EditorApplication.isPlaying)
-        {
-            StartCoroutine(webCommunication.DeleteSimulator());
-        }
+        // if (!EditorApplication.isPlaying)
+        // {
+        //     StartCoroutine(webCommunication.DeleteSimulator());
+        // }
     }
 #endif
 
     public void StartRobot()
     {
-        StartCoroutine(Execute());
+        // StartCoroutine(Execute());
         OnSimulationStarted?.Invoke();
     }
-    
+
     public void StopRobot()
     {
         StartCoroutine(Stop());
@@ -90,9 +98,7 @@ public class EvaRobotControll : MonoBehaviour
 
     IEnumerator Stop()
     {
-        webCommunication.StopAllCoroutines();
         talkController.StopAllCoroutines();
-        yield return StartCoroutine(webCommunication.DeleteSimulator());
         yield return StartCoroutine(ResetRobot());
         StopAllCoroutines();
     }
@@ -106,146 +112,195 @@ public class EvaRobotControll : MonoBehaviour
         listenController.ResetListen();
         OnSimulationEnded?.Invoke();
     }
-    IEnumerator Execute()
+
+    private void OnMessageReceived(CommandMessage commandMessage)
     {
-        CommandJson[] commandList = null;
-        bool block = true;
-        bool finished = false;
-        do
+        switch (commandMessage.Command)
         {
-            yield return StartCoroutine(webCommunication.NextCommand((result) => { commandList = result.commands; }));
-            float startTime = Time.realtimeSinceStartup;
-            int coroutinesExecuting = commandList.Length;
-            Action<bool> onParserFinish = (blk) => { coroutinesExecuting--; block = blk; } ;
-
-            ledController.ResetColor();
-
-            foreach(var command in commandList)
-            {
-                if (command.command.Equals("End"))
-                {
-                    finished = true;
-                    coroutinesExecuting--;
-
-                }
-                else
-                {
-                    yield return StartCoroutine(Parser(command, onParserFinish));
-                }
-            }
-
-            yield return new WaitUntil(() => coroutinesExecuting == 0);
-
-            float totalTime = Time.realtimeSinceStartup - startTime;
-            //Debug.Log("entrou tempo | " + block);
-            //if (block && totalTime < timeBetweenCommands)
-            //{
-            //    yield return new WaitForSeconds(timeBetweenCommands - totalTime);
-            //}
-            
-        } while (!finished && commandList != null && commandList.Length != 0);
-
-        yield return StartCoroutine(ResetRobot());
-
-        yield return StartCoroutine(webCommunication.DeleteSimulator());
-    }
-
-    private IEnumerator Parser(CommandJson command, Action<bool> onParserFinish)
-    {
-        if (command == null) yield break;
-
-        bool block = true;
-
-        switch (command)
-        {
-            case CommandTalkJson commandTalkJson:
-                if (talkController != null) 
-                    yield return StartCoroutine(talkController.Talk(commandTalkJson.text));
+            case "talk":
+                commandQueue.Enqueue(talkController.Talk(commandMessage.Parameter["text"].Value<string>()));
+                webCommunication.SendWebSocketMessage("{\"command\":\"talk_response\",\"parameter\":\"\"}");
                 break;
-
-            case CommandEmotionJson emotionCommand:
-                if (emotionController != null)
-                    yield return StartCoroutine(emotionController.ChangeEmotion(Enum.Parse<EmotionType>(emotionCommand.emotion)));
+            case "listen":
+                string listenResult = null;
+                commandQueue.Enqueue(listenController.StartListening((result) => { listenResult = result; }));
+                webCommunication.SendWebSocketMessage($"{{\"command\":\"listen_response\",\"parameter\":\"{listenResult}\"}}");
                 break;
-
-            case CommandMotionJson motionCommand:
-                if (motionController != null)
-                    StartCoroutine(motionController.Motion(motionCommand.member, motionCommand.direction));
+            case "audio":
+                commandQueue.Enqueue(audioController.PlayAudio(commandMessage.Parameter["audio"].Value<string>(), commandMessage.Parameter["block"].Value<bool>()));
+                webCommunication.SendWebSocketMessage("{\"command\":\"audio_response\",\"parameter\":\"\"}");
                 break;
-
-            case CommandLedAnimationJson commandLedAnimation: 
-                yield return StartCoroutine(ledController.ChangeLedColor(commandLedAnimation.color));
+            case "emotion":
+                commandQueue.Enqueue(emotionController.ChangeEmotion(Enum.Parse<EmotionType>(commandMessage.Parameter["type"].Value<string>())));
                 break;
-            case CommandListenJson commandListenJson:
-                if (listenController != null)
-                {
-                    string listenResult = "";
-                    yield return StartCoroutine(listenController.StartListening((result) => { listenResult = result; }, ledController));
-                    yield return StartCoroutine(webCommunication.SendInput(listenResult));
-                    Debug.Log(listenResult);
-                }
-                break;
-
-            case CommandAudioJson commandAudioJson:
-                AudioClip audioClip = null;
-                yield return webCommunication.GetAudio(commandAudioJson.file, (AudioClip clip) => { audioClip = clip; });
-                if (commandAudioJson.block)
-                    yield return StartCoroutine(PlayAudio(audioClip));
-                else
-                {
-                    StartCoroutine(PlayAudio(audioClip));
-                    block = false;
-                }
-                break;
-
-            case CommandQRCodeJson commandQRCodeJson:
-                if (qrCodeController != null)
-                {
-                    string qrResult = "";
-                    yield return StartCoroutine(qrCodeController.Scan((result) => { qrResult = result; }));
-                    yield return StartCoroutine(webCommunication.SendInput(qrResult));
-                }
-                break;
-
-            case CommandUserEmotionJson commandUserEmotionJson:
-                if (userEmotionController != null)
-                {
-                    string emotionResult = "";
-                    yield return StartCoroutine(userEmotionController.ScanEmotion((result) => { emotionResult = result; }));
-                    yield return StartCoroutine(webCommunication.SendInput(emotionResult));
-                    Debug.Log(emotionResult);
-                }
-                break;
-            
-            case CommandLightJson commandLightJson:
-                if (lightController != null)
-                {
-                    yield return StartCoroutine(lightController.ChangeLight(commandLightJson.color, commandLightJson.state));
-                }
-                break;
-
-            case CommandWaitJson commandWaitJson:
-                Debug.Log(commandWaitJson.time);
-                block = false;
-                yield return new WaitForSeconds(commandWaitJson.time);
+            case "led":
+                commandQueue.Enqueue(ledController.ChangeLedColor(commandMessage.Parameter["state"].Value<string>()));
                 break;
         }
 
-        onParserFinish?.Invoke(block);
-        OnCommandReceived?.Invoke(command);
-        yield return null;
+        if (!isProcessingCommand)
+        {
+            StartCoroutine(ExecuteCommand());
+        }
     }
+
+    IEnumerator ExecuteCommand()
+    {
+        isProcessingCommand = true;
+
+        while (commandQueue.Count > 0)
+        {
+            IEnumerator command = commandQueue.Dequeue();
+
+            yield return command;
+
+            Debug.Log("oiiiii foiiii!!!");
+        }
+
+        isProcessingCommand = false;
+    }
+
+    // IEnumerator Execute()
+    // {
+    //     CommandJson[] commandList = null;
+    //     bool block = true;
+    //     bool finished = false;
+    //     do
+    //     {
+    //         yield return StartCoroutine(webCommunication.NextCommand((result) => { commandList = result.commands; }));
+    //         float startTime = Time.realtimeSinceStartup;
+    //         int coroutinesExecuting = commandList.Length;
+    //         Action<bool> onParserFinish = (blk) => { coroutinesExecuting--; block = blk; } ;
+
+    //         ledController.ResetColor();
+
+    //         foreach(var command in commandList)
+    //         {
+    //             if (command.command.Equals("End"))
+    //             {
+    //                 finished = true;
+    //                 coroutinesExecuting--;
+
+    //             }
+    //             else
+    //             {
+    //                 yield return StartCoroutine(Parser(command, onParserFinish));
+    //             }
+    //         }
+
+    //         yield return new WaitUntil(() => coroutinesExecuting == 0);
+
+    //         float totalTime = Time.realtimeSinceStartup - startTime;
+    //         //Debug.Log("entrou tempo | " + block);
+    //         //if (block && totalTime < timeBetweenCommands)
+    //         //{
+    //         //    yield return new WaitForSeconds(timeBetweenCommands - totalTime);
+    //         //}
+
+    //     } while (!finished && commandList != null && commandList.Length != 0);
+
+    //     yield return StartCoroutine(ResetRobot());
+
+    //     yield return StartCoroutine(webCommunication.DeleteSimulator());
+    // }
+
+
+    // private IEnumerator Parser(CommandJson command, Action<bool> onParserFinish)
+    // {
+    //     if (command == null) yield break;
+
+    //     bool block = true;
+
+    //     switch (command)
+    //     {
+    //         case CommandTalkJson commandTalkJson:
+    //             if (talkController != null) 
+    //                 yield return StartCoroutine(talkController.Talk(commandTalkJson.text));
+    //             break;
+
+    //         case CommandEmotionJson emotionCommand:
+    //             if (emotionController != null)
+    //                 yield return StartCoroutine(emotionController.ChangeEmotion(Enum.Parse<EmotionType>(emotionCommand.emotion)));
+    //             break;
+
+    //         case CommandMotionJson motionCommand:
+    //             if (motionController != null)
+    //                 StartCoroutine(motionController.Motion(motionCommand.member, motionCommand.direction));
+    //             break;
+
+    //         case CommandLedAnimationJson commandLedAnimation: 
+    //             yield return StartCoroutine(ledController.ChangeLedColor(commandLedAnimation.color));
+    //             break;
+    //         case CommandListenJson commandListenJson:
+    //             if (listenController != null)
+    //             {
+    //                 string listenResult = "";
+    //                 yield return StartCoroutine(listenController.StartListening((result) => { listenResult = result; }, ledController));
+    //                 yield return StartCoroutine(webCommunication.SendInput(listenResult));
+    //                 Debug.Log(listenResult);
+    //             }
+    //             break;
+
+    //         case CommandAudioJson commandAudioJson:
+    //             AudioClip audioClip = null;
+    //             yield return webCommunication.GetAudio(commandAudioJson.file, (AudioClip clip) => { audioClip = clip; });
+    //             if (commandAudioJson.block)
+    //                 yield return StartCoroutine(PlayAudio(audioClip));
+    //             else
+    //             {
+    //                 StartCoroutine(PlayAudio(audioClip));
+    //                 block = false;
+    //             }
+    //             break;
+
+    //         case CommandQRCodeJson commandQRCodeJson:
+    //             if (qrCodeController != null)
+    //             {
+    //                 string qrResult = "";
+    //                 yield return StartCoroutine(qrCodeController.Scan((result) => { qrResult = result; }));
+    //                 yield return StartCoroutine(webCommunication.SendInput(qrResult));
+    //             }
+    //             break;
+
+    //         case CommandUserEmotionJson commandUserEmotionJson:
+    //             if (userEmotionController != null)
+    //             {
+    //                 string emotionResult = "";
+    //                 yield return StartCoroutine(userEmotionController.ScanEmotion((result) => { emotionResult = result; }));
+    //                 yield return StartCoroutine(webCommunication.SendInput(emotionResult));
+    //                 Debug.Log(emotionResult);
+    //             }
+    //             break;
+
+    //         case CommandLightJson commandLightJson:
+    //             if (lightController != null)
+    //             {
+    //                 yield return StartCoroutine(lightController.ChangeLight(commandLightJson.color, commandLightJson.state));
+    //             }
+    //             break;
+
+    //         case CommandWaitJson commandWaitJson:
+    //             Debug.Log(commandWaitJson.time);
+    //             block = false;
+    //             yield return new WaitForSeconds(commandWaitJson.time);
+    //             break;
+    //     }
+
+    //     onParserFinish?.Invoke(block);
+    //     // OnCommandReceived?.Invoke(command);
+    //     yield return null;
+    // }
 
     private IEnumerator PlayAudio(AudioClip clip)
     {
-        if(clip != null)
+        if (clip != null)
         {
             audioSource.PlayOneShot(clip);
             yield return new WaitForSeconds(clip.length);
         }
     }
 
-   public enum VIEWS
+    public enum VIEWS
     {
         NORMAL,
         CAMERA,
@@ -253,7 +308,7 @@ public class EvaRobotControll : MonoBehaviour
     }
     public void TransitionView(VIEWS newView)
     {
-        switch (newView) 
+        switch (newView)
         {
             case VIEWS.NORMAL:
                 StartCoroutine(NormalModeTransition());
@@ -307,6 +362,6 @@ public class EvaRobotControll : MonoBehaviour
 
     private void OnApplicationQuit()
     {
-        StartCoroutine(webCommunication.DeleteSimulator());
+        // StartCoroutine(webCommunication.DeleteSimulator());
     }
 }

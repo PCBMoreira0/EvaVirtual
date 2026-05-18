@@ -9,6 +9,7 @@ public class WebSocketComunication : MonoBehaviour
     WebSocket websocket;
 
     public String mensagem = "";
+    public event Action<CommandMessage> OnMessageReceived;
 
     async void Start()
     {
@@ -35,18 +36,27 @@ public class WebSocketComunication : MonoBehaviour
         {
             var message = Encoding.UTF8.GetString(bytes);
             CommandMessage commandMessage = JsonConvert.DeserializeObject<CommandMessage>(message);
-            String debug = $"Received OnMessage! Command: {commandMessage.Command}, Parameters: ";;
+            string debug = $"Received OnMessage! Command: {commandMessage.Command}, Parameters: ";;
             foreach (var kv in commandMessage.Parameter)
             {
-                debug += $"Key: {kv.Key}, Value: {kv.Value.ToString()} | "; 
+                debug += $"Key: {kv.Key}, Value: {kv.Value} | "; 
             }
             Debug.Log(debug);
+            OnMessageReceived?.Invoke(commandMessage);
         };
 
         await websocket.Connect();
     }
 
-    public async void SendWebSocketMessage()
+    public async void SendWebSocketMessage(string message)
+    {
+        if (websocket.State == WebSocketState.Open)
+        {
+            await websocket.SendText(message);
+        }
+    }
+
+    public async void SendWebSocketMessageALONE()
     {
         if (websocket.State == WebSocketState.Open)
         {
