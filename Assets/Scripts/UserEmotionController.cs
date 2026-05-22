@@ -7,15 +7,12 @@ public class UserEmotionController : MonoBehaviour
     [SerializeField] private float delayBeforeScanning = 1.0f;
 
     private CameraController cameraController;
-    private APIComunication api;
-
     private void Awake()
     {
-        api = GetComponent<APIComunication>();
         cameraController = GetComponent<CameraController>();
     }
 
-    public IEnumerator ScanEmotion(Action<string> result)
+    public IEnumerator ScanEmotion(APIComunication api, Action<string> result)
     {
         yield return StartCoroutine(cameraController.StartCamera(true));
 
@@ -35,8 +32,8 @@ public class UserEmotionController : MonoBehaviour
         result?.Invoke(emotion);
     }
 
-    public void Scan()
+    public void Scan(APIComunication api)
     {
-        StartCoroutine(ScanEmotion((result) => { Debug.Log(result); }));
+        StartCoroutine(ScanEmotion(api, (result) => { Debug.Log(result); }));
     }
 }

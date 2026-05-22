@@ -4,18 +4,21 @@ using UnityEngine;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
 using static Utils.CommandJsonConverter;
+using UnityEngine.Events;
+using UnityEditor;
 
 public class APIComunication : MonoBehaviour
 {
     [SerializeField] private string xml = "teste_EvaML";
     private string uuid = string.Empty;
-    private string defaultUri = "http://localhost:8001";
+    private string defaultUri = "http://localhost:8000";
 
-    public event Action OnInitializationComplete;
+    public UnityEvent<string> OnInitializationComplete;
 
     private class InitEndpoint
     {
-        public string uuid;
+        public string message;
+        public string user_id;
     }
 
     public class InputField
@@ -31,15 +34,20 @@ public class APIComunication : MonoBehaviour
     {
         public string result = "";
     }
-
-    public void ChangeXML(string newXML)
+    
+#if UNITY_EDITOR
+    private async void Update()
     {
-        xml = newXML;
+        if (!EditorApplication.isPlaying)
+        {
+            await DeleteSimulator();
+        }
     }
+#endif
 
     public void UpdateIP(string ip)
     {
-        defaultUri = String.Concat("http://", ip);
+        defaultUri = string.Concat("http://", ip);
     }
 
     public void StartSimulation()
@@ -48,9 +56,9 @@ public class APIComunication : MonoBehaviour
     }
 
 
-    IEnumerator StartSimulationCoroutine()
+    public IEnumerator StartSimulationCoroutine()
     {
-        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/init", "", "application/json"))
+        using (var web = UnityWebRequest.Get($"{defaultUri}/init"))
         {
             // Init endpoint
             yield return web.SendWebRequest();
@@ -66,7 +74,7 @@ public class APIComunication : MonoBehaviour
             {
                 try
                 {
-                    uuid = JsonUtility.FromJson<InitEndpoint>(v).uuid;
+                    uuid = JsonUtility.FromJson<InitEndpoint>(v).user_id;
                 }
                 catch (Exception e)
                 {
@@ -79,80 +87,9 @@ public class APIComunication : MonoBehaviour
             }
         }
 
-        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/import/{uuid}/?path={xml}", "", "application/Json"))
-        {
-            // Import endpoint
-            yield return web.SendWebRequest();
-
-            if (web.result != UnityWebRequest.Result.Success)
-            {
-                Debug.LogError(web.error + $"Conte�do: {web.downloadHandler.text}");
-                yield break;
-            }
-        }
-
-        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/start/{uuid}", "", "application/Json"))
-        {
-            // Start endpoint
-            yield return web.SendWebRequest();
-
-            if (web.result != UnityWebRequest.Result.Success)
-            {
-                Debug.LogError(web.error);
-                yield break;
-            }
-        }
-
-        OnInitializationComplete?.Invoke();
+        OnInitializationComplete?.Invoke(uuid);
     }
 
-    public IEnumerator NextCommand(Action<CommandListJson> result)
-    {
-        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/next/{uuid}", "", "application/Json"))
-        {
-            yield return web.SendWebRequest();
-
-            if (web.result != UnityWebRequest.Result.Success)
-            {
-                Debug.LogError(web.error);
-                yield break;
-            }
-        
-            string a = web.downloadHandler.text;
-            if (!string.IsNullOrEmpty(a))
-            {
-                try
-                {
-                    CommandListJson commandListJson = JsonConvert.DeserializeObject<CommandListJson>(a);
-
-                    result?.Invoke(commandListJson);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"Erro ao fazer parse do json: {e.Message}");
-                }
-            }
-            else
-            {
-                Debug.LogError("Speech To Text: Json returns null.");
-            }
-        }
-    }
-
-    public IEnumerator SendInput(string input)
-    {
-        InputField inputField = new InputField(input);
-        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/send/{uuid}", JsonUtility.ToJson(inputField), "application/Json"))
-        {
-            yield return web.SendWebRequest();
-
-            if (web.result != UnityWebRequest.Result.Success)
-            {
-                Debug.LogError("ERROR: " + web.error);
-                yield break;
-            }
-        }
-    }
 
     public IEnumerator GetTTS(string text, Action<AudioClip> result)
     {
@@ -265,7 +202,7 @@ public class APIComunication : MonoBehaviour
 
     public async Awaitable DeleteSimulator()
     {
-        using (var web = UnityWebRequest.Delete($"{defaultUri}/sim/delete/{uuid}"))
+        using (var web = UnityWebRequest.Get($"{defaultUri}/delete/{uuid}"))
         {
             await web.SendWebRequest();
 

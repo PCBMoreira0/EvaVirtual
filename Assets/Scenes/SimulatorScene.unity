@@ -4353,6 +4353,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   webCommunication: {fileID: 991013074}
+  apiCommunication: {fileID: 991013076}
+  xmlScript: pcb2_evaml.xml
   timeBetweenCommands: 2
   audioSource: {fileID: 0}
   cameraModeCameraPosition: {x: 0, y: 0.85, z: -2.31}
@@ -4674,7 +4676,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   api: {fileID: 0}
-  ledController: {fileID: 899783287}
   textMeshProUGUI: {fileID: 282848243}
   drop: {fileID: 501713003}
   listenInputField: {fileID: 746192626}
@@ -5231,6 +5232,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mensagem: '{"command":"audio_response","parameter":""}'
+  userId: 0
 --- !u!4 &991013075
 Transform:
   m_ObjectHideFlags: 0
@@ -5259,6 +5261,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   xml: teste_EvaML
+  OnInitializationComplete:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &998982032
 GameObject:
   m_ObjectHideFlags: 0
@@ -6232,9 +6237,9 @@ MonoBehaviour:
   m_OnEndEdit:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: APIComunication, Assembly-CSharp
-        m_MethodName: ChangeXML
+      - m_Target: {fileID: 899783277}
+        m_TargetAssemblyTypeName: EvaRobotControll, Assembly-CSharp
+        m_MethodName: SetScript
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -6853,9 +6858,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 991013074}
-        m_TargetAssemblyTypeName: WebSocketComunication, Assembly-CSharp
-        m_MethodName: SendWebSocketMessageALONE
+      - m_Target: {fileID: 899783277}
+        m_TargetAssemblyTypeName: EvaRobotControll, Assembly-CSharp
+        m_MethodName: InitRobot
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

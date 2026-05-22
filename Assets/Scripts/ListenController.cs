@@ -9,7 +9,6 @@ using UnityEngine.UI;
 public class ListenController : MonoBehaviour
 {
     public APIComunication api;
-    [SerializeField] private LedController ledController;
     [SerializeField] private TextMeshProUGUI textMeshProUGUI;
     [SerializeField] private TMP_Dropdown drop;
     [SerializeField] private TMP_InputField listenInputField;
@@ -21,11 +20,6 @@ public class ListenController : MonoBehaviour
 
     private string selectedDevice = "";
 
-    void Awake()
-    {
-        ledController = GetComponent<LedController>();
-    }
-    
     private void Start()
     {
         //    loudneessField.text = silent_threshold.ToString();
@@ -47,7 +41,7 @@ public class ListenController : MonoBehaviour
 
     public void UpdateLoudnessThreshold(float loudness)
     {
-        silent_threshold = loudness;        
+        silent_threshold = loudness;
     }
 
     public void ChangeDeviceFromDropDown(int value)
@@ -57,10 +51,9 @@ public class ListenController : MonoBehaviour
 
     public IEnumerator StartListening(Action<string> result)
     {
-        if(keyboardToggle.isOn)
+        if (keyboardToggle.isOn)
         {
             yield return GetKeyboardInput(result);
-            ledController.ResetColor();
         }
         else
         {
@@ -102,7 +95,7 @@ public class ListenController : MonoBehaviour
 
             StartCoroutine(StartRecording(null));
         }
-    }    
+    }
 
     public void StartMiccc()
     {
@@ -130,7 +123,7 @@ public class ListenController : MonoBehaviour
             bool loudness = AudioOperations.IsAnySubwindowLoud(audioClip, Microphone.GetPosition(selectedDevice), sampleWindow, subWindowSize, silent_threshold);
             Debug.Log("Thesh: " + silent_threshold + " Loud: " + loudness);
 
-            if(!loudness) //loudness <= silent_threshold
+            if (!loudness) //loudness <= silent_threshold
             {
                 if (alreadyPassedTheshold)
                 {
@@ -147,12 +140,12 @@ public class ListenController : MonoBehaviour
             yield return new WaitForSeconds(windowSize_seconds);
         }
 
-        while(Microphone.IsRecording(selectedDevice)) yield return null;
+        while (Microphone.IsRecording(selectedDevice)) yield return null;
 
         float[] data = new float[lastMicPos];
         audioClip.GetData(data, 0);
         AudioClip trimm = AudioClip.Create("trimmedAudio", lastMicPos, audioClip.channels, audioClip.frequency, false);
-        
+
         trimm.SetData(data, 0);
         yield return api.GetSTT(trimm, result);
         StopAllCoroutines();
@@ -162,6 +155,5 @@ public class ListenController : MonoBehaviour
     private void StopRecording()
     {
         Microphone.End(selectedDevice);
-        ledController?.ResetColor();
     }
 }

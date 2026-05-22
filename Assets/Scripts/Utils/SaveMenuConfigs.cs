@@ -21,7 +21,6 @@ public class SaveMenuConfigs : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        Debug.Log("OIIIII");
         if (PlayerPrefs.HasKey(serverIPKey))
         {
             serverIP.text = PlayerPrefs.GetString(serverIPKey);

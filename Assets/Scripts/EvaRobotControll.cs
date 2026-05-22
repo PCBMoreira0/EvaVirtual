@@ -12,11 +12,14 @@ using static Utils.CommandJsonConverter;
 public class EvaRobotControll : MonoBehaviour
 {
     [SerializeField] private WebSocketComunication webCommunication;
+    [SerializeField] private APIComunication apiCommunication;
+    [SerializeField] private string xmlScript = "pcb2_evaml.xml";
+
     [SerializeField] private float timeBetweenCommands = 2f;
 
     [SerializeField] private AudioSource audioSource;
 
-    private Queue<IEnumerator> commandQueue = new Queue<IEnumerator>();
+    private Queue<CommandMessage> commandQueue = new Queue<CommandMessage>();
     private bool isProcessingCommand = false;
 
 
@@ -66,47 +69,55 @@ public class EvaRobotControll : MonoBehaviour
 
     void OnDisable()
     {
+        webCommunication.OnConnect -= StartRobot;
+        apiCommunication.OnInitializationComplete.RemoveListener(SetWebsocket);
         webCommunication.OnMessageReceived -= OnMessageReceived;
     }
 
     void OnEnable()
     {
+
+        webCommunication.OnConnect += StartRobot;
+        apiCommunication.OnInitializationComplete.AddListener(SetWebsocket);
         webCommunication.OnMessageReceived += OnMessageReceived;
     }
 
-#if UNITY_EDITOR
-    private void Update()
+    public void SetScript(string script)
     {
-        // if (!EditorApplication.isPlaying)
-        // {
-        //     StartCoroutine(webCommunication.DeleteSimulator());
-        // }
+        xmlScript = script;
     }
-#endif
 
-    public void StartRobot()
+    public void InitRobot()
     {
-        // StartCoroutine(Execute());
+        apiCommunication.StartSimulation();
+    }
+
+    private void SetWebsocket(string userId)
+    {
+        webCommunication.SetUserID(userId);
+        webCommunication.Connect();
+    }
+
+    private void StartRobot()
+    {
+        webCommunication.SendCommand(SendCommands.SET_SCRIPT, xmlScript);
+        webCommunication.SendCommand(SendCommands.START);
         OnSimulationStarted?.Invoke();
     }
 
-    public void StopRobot()
+    public async void StopRobot()
     {
-        StartCoroutine(Stop());
+        await apiCommunication.DeleteSimulator();
+        ResetRobot();
         OnSimulationEnded?.Invoke();
     }
 
-    IEnumerator Stop()
-    {
-        talkController.StopAllCoroutines();
-        yield return StartCoroutine(ResetRobot());
-        StopAllCoroutines();
-    }
 
     private IEnumerator ResetRobot()
     {
-        yield return StartCoroutine(motionController.ResetPosition());
-        yield return StartCoroutine(emotionController.ChangeEmotion(EmotionType.NEUTRAL));
+        talkController.StopAllCoroutines();
+        yield return motionController.ResetPosition();
+        yield return emotionController.ChangeEmotion(EmotionType.NEUTRAL);
         talkController.ResetDialogueBox();
         ledController.ResetColor();
         listenController.ResetListen();
@@ -115,28 +126,7 @@ public class EvaRobotControll : MonoBehaviour
 
     private void OnMessageReceived(CommandMessage commandMessage)
     {
-        switch (commandMessage.Command)
-        {
-            case "talk":
-                commandQueue.Enqueue(talkController.Talk(commandMessage.Parameter["text"].Value<string>()));
-                webCommunication.SendWebSocketMessage("{\"command\":\"talk_response\",\"parameter\":\"\"}");
-                break;
-            case "listen":
-                string listenResult = null;
-                commandQueue.Enqueue(listenController.StartListening((result) => { listenResult = result; }));
-                webCommunication.SendWebSocketMessage($"{{\"command\":\"listen_response\",\"parameter\":\"{listenResult}\"}}");
-                break;
-            case "audio":
-                commandQueue.Enqueue(audioController.PlayAudio(commandMessage.Parameter["audio"].Value<string>(), commandMessage.Parameter["block"].Value<bool>()));
-                webCommunication.SendWebSocketMessage("{\"command\":\"audio_response\",\"parameter\":\"\"}");
-                break;
-            case "emotion":
-                commandQueue.Enqueue(emotionController.ChangeEmotion(Enum.Parse<EmotionType>(commandMessage.Parameter["type"].Value<string>())));
-                break;
-            case "led":
-                commandQueue.Enqueue(ledController.ChangeLedColor(commandMessage.Parameter["state"].Value<string>()));
-                break;
-        }
+        commandQueue.Enqueue(commandMessage);
 
         if (!isProcessingCommand)
         {
@@ -150,11 +140,46 @@ public class EvaRobotControll : MonoBehaviour
 
         while (commandQueue.Count > 0)
         {
-            IEnumerator command = commandQueue.Dequeue();
+            CommandMessage commandMessage = commandQueue.Dequeue();
+            switch (commandMessage.Command)
+            {
+                case "talk":
+                    yield return talkController.Talk(commandMessage.Parameter["text"].Value<string>());
+                    webCommunication.SendCommand(SendCommands.TALK_RESPONSE);
+                    break;
+                case "listen":
+                    string listenResult = null;
+                    yield return listenController.StartListening((result) => { listenResult = result; });
+                    webCommunication.SendCommand(SendCommands.LISTEN_REPSONSE, listenResult);
+                    break;
+                case "audio":
+                    yield return audioController.PlayAudio(commandMessage.Parameter["audio"].Value<string>(), commandMessage.Parameter["block"].Value<bool>());
+                    webCommunication.SendCommand(SendCommands.AUDIO_RESPONSE);
+                    break;
+                case "emotion":
+                    yield return emotionController.ChangeEmotion(Enum.Parse<EmotionType>(commandMessage.Parameter["type"].Value<string>()));
+                    break;
+                case "led":
+                    yield return ledController.ChangeLedColor(commandMessage.Parameter["state"].Value<string>());
+                    break;
+                case "motion":
+                    yield return motionController.Motion("head", commandMessage.Parameter["head"].Value<string>());
+                    break;
+                case "qrread":
+                    string qrResult = null;
+                    yield return qrCodeController.Scan((result) => { qrResult = result; });
+                    webCommunication.SendCommand(SendCommands.QRREAD_RESPONSE, qrResult);
+                    break;
+                case "useremotion":
+                    string useremotionResult = null;
+                    yield return userEmotionController.ScanEmotion(apiCommunication, (result) => { useremotionResult = result; });
+                    webCommunication.SendCommand(SendCommands.USEREMOTION_RESPONSE, useremotionResult);
+                    break;
 
-            yield return command;
-
-            Debug.Log("oiiiii foiiii!!!");
+                default:
+                    Debug.Log($"{{\"command\":\"{commandMessage.Command}\",\"parameter\":\"{commandMessage.Parameter}\"}}");
+                    break;
+            }
         }
 
         isProcessingCommand = false;

@@ -17,6 +17,16 @@ public class LedController : MonoBehaviour
     {
         led.material.color = GetColor(color);
         led.material.EnableKeyword("_EMISSION");
+
+        if (GetColor(color) == Color.black)
+        {
+            led.material.SetColor("_BaseColor", Color.white);
+        }
+        else
+        {
+            led.material.SetColor("_BaseColor", GetColor(color));
+        }
+
         led.material.SetColor("_EmissionColor", GetColor(color) * ledIntensity);
 
         yield return null;
@@ -37,11 +47,11 @@ public class LedController : MonoBehaviour
             case "yellow":
                 return Color.yellow;
             case "STOP":
-                return Color.white;
+                return Color.black;
             case "rainbow":
                 return Color.magenta;
             default:
-                return Color.white;
+                return Color.black;
         }
     }
 }

@@ -3,6 +3,19 @@ using System.Text;
 using NativeWebSocket;
 using Newtonsoft.Json;
 using UnityEngine;
+using UnityEngine.Events;
+
+public enum SendCommands
+{
+    TALK_RESPONSE,
+    LISTEN_REPSONSE,
+    AUDIO_RESPONSE,
+    QRREAD_RESPONSE,
+    USEREMOTION_RESPONSE,
+    SET_SCRIPT,
+    RESET,
+    START
+}
 
 public class WebSocketComunication : MonoBehaviour
 {
@@ -10,15 +23,25 @@ public class WebSocketComunication : MonoBehaviour
 
     public String mensagem = "";
     public event Action<CommandMessage> OnMessageReceived;
+    public event Action OnConnect;
+    public event Action OnDisconnect;
 
-    async void Start()
+    [SerializeField] private string userId = "0";
+
+    public void SetUserID(string userId)
+    {
+        this.userId = userId;
+    }
+
+    public async void Connect()
     {
         Application.runInBackground = true;
 
-        websocket = new WebSocket("ws://localhost:8000/ws/1");
+        websocket = new WebSocket("ws://localhost:8000/ws/" + userId);
 
         websocket.OnOpen += () =>
         {
+            OnConnect?.Invoke();
             Debug.Log("Connection open!");
         };
 
@@ -30,6 +53,7 @@ public class WebSocketComunication : MonoBehaviour
         websocket.OnClose += (code) =>
         {
             Debug.Log("Connection closed! Code: " + code);
+            OnDisconnect?.Invoke();
         };
 
         websocket.OnMessage += (bytes) =>
@@ -61,6 +85,38 @@ public class WebSocketComunication : MonoBehaviour
         if (websocket.State == WebSocketState.Open)
         {
             await websocket.SendText(mensagem);
+        }
+    }
+
+    public void SendCommand(SendCommands command, string payload = "")
+    {
+        switch (command)
+        {
+            case SendCommands.TALK_RESPONSE:
+                SendWebSocketMessage("{\"command\":\"talk_response\",\"parameter\":\"\"}");
+                break;
+            case SendCommands.AUDIO_RESPONSE:
+                SendWebSocketMessage("{\"command\":\"audio_response\",\"parameter\":\"\"}");
+                break;
+            case SendCommands.LISTEN_REPSONSE:
+                SendWebSocketMessage($"{{\"command\":\"listen_response\",\"parameter\":\"{payload}\"}}");
+                break;
+            case SendCommands.QRREAD_RESPONSE:
+                SendWebSocketMessage($"{{\"command\":\"qrread_response\",\"parameter\":\"{payload}\"}}");
+                break;
+            case SendCommands.USEREMOTION_RESPONSE:
+                SendWebSocketMessage($"{{\"command\":\"useremotion_response\",\"parameter\":\"{payload}\"}}");
+                break;
+            
+            case SendCommands.SET_SCRIPT:
+                SendWebSocketMessage($"{{\"command\":\"set_script\",\"parameter\":\"{payload}\"}}");
+                break;
+            case SendCommands.START:
+                SendWebSocketMessage("{\"command\":\"start\",\"parameter\":\"\"}");
+                break;
+            case SendCommands.RESET:
+                SendWebSocketMessage("{\"command\":\"reset\",\"parameter\":\"\"}");
+                break;
         }
     }
 
