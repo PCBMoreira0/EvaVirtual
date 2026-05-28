@@ -8,9 +8,7 @@ public class LedController : MonoBehaviour
 
     public void ResetColor()
     {
-        led.material.color = Color.white;
-        led.material.SetColor("_EmissionColor", Color.white * ledIntensity);
-        led.material.DisableKeyword("_EMISSION");
+        StartCoroutine(ChangeLedColor("STOP"));
     }
 
     public IEnumerator ChangeLedColor(string color)

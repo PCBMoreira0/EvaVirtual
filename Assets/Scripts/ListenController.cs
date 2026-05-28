@@ -8,7 +8,8 @@ using UnityEngine.UI;
 
 public class ListenController : MonoBehaviour
 {
-    public APIComunication api;
+    [SerializeField] private APIComunication api;
+    [SerializeField] private LedController ledController;
     [SerializeField] private TextMeshProUGUI textMeshProUGUI;
     [SerializeField] private TMP_Dropdown drop;
     [SerializeField] private TMP_InputField listenInputField;
@@ -81,6 +82,8 @@ public class ListenController : MonoBehaviour
 
         result?.Invoke(input);
         listenInputField.gameObject.SetActive(false);
+
+        ledController.ResetColor();
     }
 
     public void ResetListen()
@@ -147,6 +150,7 @@ public class ListenController : MonoBehaviour
 
         while (Microphone.IsRecording(selectedDevice)) yield return null;
 
+        ledController.ResetColor();
         float[] data = new float[lastMicPos];
         audioClip.GetData(data, 0);
         AudioClip trimm = AudioClip.Create("trimmedAudio", lastMicPos, audioClip.channels, audioClip.frequency, false);

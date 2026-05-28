@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
-using Unity.Sentis;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
@@ -54,7 +53,7 @@ public class EvaRobotControll : MonoBehaviour
     public IEnumerator testtt()
     {
         string qrResult = null;
-        yield return qrCodeController.Scan((result) => { qrResult = result; });
+        yield return userEmotionController.ScanEmotion(apiCommunication, (result) => { qrResult = result; });
 
         Debug.Log(qrResult);
     }
@@ -120,7 +119,7 @@ public class EvaRobotControll : MonoBehaviour
     public async void StopRobot()
     {
         await apiCommunication.DeleteSimulator();
-        ResetRobot();
+        StartCoroutine(ResetRobot());
         OnSimulationEnded?.Invoke();
     }
 
@@ -171,7 +170,7 @@ public class EvaRobotControll : MonoBehaviour
                 case "emotion":
                     yield return emotionController.ChangeEmotion(Enum.Parse<EmotionType>(commandMessage.Parameter["type"].Value<string>()));
                     break;
-                case "led":
+                case "leds":
                     yield return ledController.ChangeLedColor(commandMessage.Parameter["state"].Value<string>());
                     break;
                 case "motion":
@@ -186,6 +185,9 @@ public class EvaRobotControll : MonoBehaviour
                     string useremotionResult = null;
                     yield return userEmotionController.ScanEmotion(apiCommunication, (result) => { useremotionResult = result; });
                     webCommunication.SendCommand(SendCommands.USEREMOTION_RESPONSE, useremotionResult);
+                    break;
+                case "end_script":
+                    StopRobot();
                     break;
 
                 default:

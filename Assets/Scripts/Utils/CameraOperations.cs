@@ -105,7 +105,7 @@ public static class CameraOperations
 
             default:
                 rotated = new Texture2D(height, width);
-                rotatedPixels = new Color32[originalPixels.Length];
+                rotatedPixels = originalPixels;
                 break;
         }
 

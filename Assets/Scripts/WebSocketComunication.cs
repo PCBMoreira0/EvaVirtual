@@ -20,6 +20,7 @@ public enum SendCommands
 public class WebSocketComunication : MonoBehaviour
 {
     WebSocket websocket = null;
+    [SerializeField] private string ipAddress = "localhost:8000";
 
     public String mensagem = "";
     public event Action<CommandMessage> OnMessageReceived;
@@ -33,11 +34,16 @@ public class WebSocketComunication : MonoBehaviour
         this.userId = userId;
     }
 
+    public void SetIP(string ipAddress)
+    {
+        this.ipAddress = ipAddress;
+    }
+
     public async void Connect()
     {
         Application.runInBackground = true;
 
-        websocket = new WebSocket("ws://localhost:8000/ws/" + userId);
+        websocket = new WebSocket("ws://" + ipAddress + "/ws/" + userId);
 
         websocket.OnOpen += () =>
         {
