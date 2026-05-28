@@ -47,6 +47,18 @@ public class EvaRobotControll : MonoBehaviour
     private LightController lightController;
     #endregion
 
+    public void teste()
+    {
+        StartCoroutine(testtt());
+    }
+    public IEnumerator testtt()
+    {
+        string qrResult = null;
+        yield return qrCodeController.Scan((result) => { qrResult = result; });
+
+        Debug.Log(qrResult);
+    }
+
     private void Awake()
     {
         talkController = GetComponent<TalkController>();
@@ -89,7 +101,7 @@ public class EvaRobotControll : MonoBehaviour
 
     public void InitRobot()
     {
-        apiCommunication.StartSimulation();
+        apiCommunication.InitSimulation();
     }
 
     private void SetWebsocket(string userId)

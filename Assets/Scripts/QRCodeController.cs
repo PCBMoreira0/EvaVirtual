@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using ZXing;
 using ZXing.Common;
@@ -15,21 +16,28 @@ public class QRCodeController : MonoBehaviour
 
     private void Start()
     {
-        reader = new BarcodeReader();
+        reader = new BarcodeReader
+        {
+            AutoRotate = true,
+            Options = new DecodingOptions
+            {
+                TryHarder = true,
+                PossibleFormats = new List<BarcodeFormat> { BarcodeFormat.QR_CODE }
+            }
+        };
     }
 
     public IEnumerator Scan(Action<string> result)
     {
         yield return cameraController.StartCamera(true);
-        
+
         Result codeResult = null;
         do
         {
-            if(!cameraController.IsCamAvailable) break;
+            if (!cameraController.IsCamAvailable) break;
 
-            Texture2D frame = cameraController.GetCameraFrame();
-            codeResult = reader.Decode(frame.GetPixels32(), frame.width, frame.height);
-            yield return new WaitForSeconds(0.2f);
+            codeResult = reader.Decode(cameraController.GetCameraFramePixels(), cameraController.GetCamWidth(), cameraController.GetCamHeight());
+            yield return new WaitForSeconds(0.5f);
         } while (codeResult == null);
 
         cameraController.StopCamera();

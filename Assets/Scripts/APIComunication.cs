@@ -9,9 +9,8 @@ using UnityEditor;
 
 public class APIComunication : MonoBehaviour
 {
-    [SerializeField] private string xml = "teste_EvaML";
     private string uuid = string.Empty;
-    private string defaultUri = "http://localhost:8000";
+    [SerializeField] private string defaultUri = "http://localhost:8000";
 
     public UnityEvent<string> OnInitializationComplete;
 
@@ -50,15 +49,15 @@ public class APIComunication : MonoBehaviour
         defaultUri = string.Concat("http://", ip);
     }
 
-    public void StartSimulation()
+    public void InitSimulation()
     {
-        StartCoroutine(StartSimulationCoroutine());
+        StartCoroutine(InitSimulationCoroutine());
     }
 
 
-    public IEnumerator StartSimulationCoroutine()
+    public IEnumerator InitSimulationCoroutine()
     {
-        using (var web = UnityWebRequest.Get($"{defaultUri}/init"))
+        using (var web = UnityWebRequest.Post($"{defaultUri}/init", "", "application/Json"))
         {
             // Init endpoint
             yield return web.SendWebRequest();
@@ -90,11 +89,28 @@ public class APIComunication : MonoBehaviour
         OnInitializationComplete?.Invoke(uuid);
     }
 
+    public async Awaitable DeleteSimulator()
+    {
+        using (var web = UnityWebRequest.Delete($"{defaultUri}/delete/{uuid}"))
+        {
+            await web.SendWebRequest();
+
+            if (web.result != UnityWebRequest.Result.Success)
+            {
+                if(web != null)
+                {
+                    Debug.LogError(web.error);
+                }
+            }
+        }
+    }
+
+
 
     public IEnumerator GetTTS(string text, Action<AudioClip> result)
     {
         InputField input = new InputField(text);
-        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/tts/", JsonUtility.ToJson(input), "application/Json"))
+        using (var web = UnityWebRequest.Post($"{defaultUri}/tts", JsonUtility.ToJson(input), "application/Json"))
         {
             web.downloadHandler = new DownloadHandlerAudioClip(web.uri, AudioType.MPEG);
 
@@ -116,7 +132,7 @@ public class APIComunication : MonoBehaviour
         var b = AudioOperations.ConvertAudioClipToWav(clip);
         www.AddBinaryData("file", b, "audio.wav", "audio/wav");
 
-        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/stt", www))
+        using (var web = UnityWebRequest.Post($"{defaultUri}/stt", www))
         {
             yield return web.SendWebRequest();
 
@@ -148,7 +164,7 @@ public class APIComunication : MonoBehaviour
 
     public IEnumerator GetAudio(string text, Action<AudioClip> result)
     {
-        using (var web = UnityWebRequest.Get($"{defaultUri}/sim/audio/{text}"))
+        using (var web = UnityWebRequest.Get($"{defaultUri}/audio/{text}"))
         {
             web.downloadHandler = new DownloadHandlerAudioClip(web.uri, AudioType.WAV);
 
@@ -170,7 +186,7 @@ public class APIComunication : MonoBehaviour
         var b = image.EncodeToPNG();
         www.AddBinaryData("file", b, "image.png", "image/png");
 
-        using (var web = UnityWebRequest.Post($"{defaultUri}/sim/emotion", www))
+        using (var web = UnityWebRequest.Post($"{defaultUri}/emotion", www))
         {
             yield return web.SendWebRequest();
 
@@ -196,19 +212,6 @@ public class APIComunication : MonoBehaviour
             else
             {
                 Debug.LogError("Emotion Recognition: Json returns null.");
-            }
-        }
-    }
-
-    public async Awaitable DeleteSimulator()
-    {
-        using (var web = UnityWebRequest.Get($"{defaultUri}/delete/{uuid}"))
-        {
-            await web.SendWebRequest();
-
-            if (web.result != UnityWebRequest.Result.Success)
-            {
-                Debug.LogError(web.error);
             }
         }
     }

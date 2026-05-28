@@ -12,7 +12,7 @@ public class ListenController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textMeshProUGUI;
     [SerializeField] private TMP_Dropdown drop;
     [SerializeField] private TMP_InputField listenInputField;
-    [SerializeField] private Toggle keyboardToggle;
+    private bool keyboardToggle = true;
 
     [SerializeField] private float silent_threshold = 0.05f;
     [SerializeField] private float windowSize_seconds = 3;
@@ -39,6 +39,11 @@ public class ListenController : MonoBehaviour
         selectedDevice = drop.options[0].text;
     }
 
+    public void EnableKeyboard(bool value)
+    {
+        keyboardToggle = value;
+    }
+
     public void UpdateLoudnessThreshold(float loudness)
     {
         silent_threshold = loudness;
@@ -51,7 +56,7 @@ public class ListenController : MonoBehaviour
 
     public IEnumerator StartListening(Action<string> result)
     {
-        if (keyboardToggle.isOn)
+        if (keyboardToggle)
         {
             yield return GetKeyboardInput(result);
         }

@@ -50,7 +50,6 @@ public class SaveMenuConfigs : MonoBehaviour
 
     public void SaveConfigs()
     {
-        Debug.Log("SALVEI AQUI SAFADO");
         PlayerPrefs.SetString(serverIPKey, serverIP.text);
         PlayerPrefs.SetString(bool_ttsKey, bool_tts.isOn.ToString());
         PlayerPrefs.SetString(bool_keyboardKey, bool_keyboard.isOn.ToString());

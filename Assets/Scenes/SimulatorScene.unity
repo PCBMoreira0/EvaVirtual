@@ -3431,7 +3431,19 @@ MonoBehaviour:
   m_Group: {fileID: 0}
   onValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 899783283}
+        m_TargetAssemblyTypeName: ListenController, Assembly-CSharp
+        m_MethodName: EnableKeyboard
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   m_IsOn: 1
 --- !u!224 &698841329
 RectTransform:
@@ -4675,11 +4687,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dfab5d1a6615d949850566611aa87eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  api: {fileID: 0}
+  api: {fileID: 991013076}
   textMeshProUGUI: {fileID: 282848243}
   drop: {fileID: 501713003}
   listenInputField: {fileID: 746192626}
-  keyboardToggle: {fileID: 698841328}
   silent_threshold: 0.05
   windowSize_seconds: 0.5
   subWindowSize: 8000
@@ -5260,7 +5271,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64c345704c85a724284f468a53b42d91, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  xml: teste_EvaML
+  defaultUri: http://localhost:8000
   OnInitializationComplete:
     m_PersistentCalls:
       m_Calls: []

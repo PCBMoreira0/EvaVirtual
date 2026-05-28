@@ -19,7 +19,7 @@ public enum SendCommands
 
 public class WebSocketComunication : MonoBehaviour
 {
-    WebSocket websocket;
+    WebSocket websocket = null;
 
     public String mensagem = "";
     public event Action<CommandMessage> OnMessageReceived;
@@ -122,6 +122,9 @@ public class WebSocketComunication : MonoBehaviour
 
     private async void OnApplicationQuit()
     {
-        await websocket.Close();
+        if(websocket != null)
+        {
+            await websocket.Close();
+        }
     }
 }

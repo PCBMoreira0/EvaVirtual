@@ -22,8 +22,8 @@ public class UserEmotionController : MonoBehaviour
         do
         {
             Texture2D texture = cameraController.GetCameraFrame();
-            yield return StartCoroutine(api.GetEmotion(texture, (result) => { emotion = result; }));
-
+            yield return api.GetEmotion(texture, (result) => { emotion = result; });
+            Destroy(texture);
             yield return null;
         }
         while (string.IsNullOrEmpty(emotion));

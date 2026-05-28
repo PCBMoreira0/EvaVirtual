@@ -37,7 +37,7 @@ public class CameraController : MonoBehaviour
         if (webCamDevices.Length == 0)
         {
             IsCamAvailable = false;
-            Debug.Log("Nenhuma camera disponível");
+            Debug.Log("Nenhuma camera disponï¿½vel");
             yield break;
         }
 
@@ -79,7 +79,7 @@ public class CameraController : MonoBehaviour
         StartCoroutine(StartCamera(true));
     }
 
-    public IEnumerator StartCamera(bool isFrontCamera) 
+    public IEnumerator StartCamera(bool isFrontCamera)
     {
         if (!IsCamAvailable) yield break;
 
@@ -88,24 +88,45 @@ public class CameraController : MonoBehaviour
         OnCameraActivated?.Invoke();
 
         webCamTexture.deviceName = GetCamera(isFrontCamera);
-        webCamTexture.Play();  
+        webCamTexture.Play();
         yield return new WaitForSeconds(1);
         camViewport.rectTransform.localEulerAngles = new Vector3(0, 0, -webCamTexture.videoRotationAngle);
 
         Camera.main.transform.localPosition = cameraModePosition;
         camObject.gameObject.SetActive(true);
     }
-    
+
     public Texture2D GetCameraFrame()
     {
-        if(!IsPlaying) return null;
+        if (!IsPlaying) return null;
 
-        return CameraOperations.RotateTexture(webCamTexture.GetPixels32(), webCamTexture.width, webCamTexture.height, 360 - webCamTexture.videoRotationAngle); 
+        return CameraOperations.RotateTexture(webCamTexture.GetPixels32(), webCamTexture.width, webCamTexture.height, 360 - webCamTexture.videoRotationAngle);
+    }
+
+    public Color32[] GetCameraFramePixels()
+    {
+        if (!IsPlaying) return null;
+
+        return webCamTexture.GetPixels32();
+    }
+
+    public int GetCamWidth()
+    {
+        if (!IsPlaying) return 0;
+
+        return webCamTexture.width;
+    }
+
+    public int GetCamHeight()
+    {
+        if (!IsPlaying) return 0;
+
+        return webCamTexture.height;
     }
 
     public void StopCamera()
     {
-        if(!IsPlaying) return;
+        if (!IsPlaying) return;
         webCamTexture.Stop();
 
         Camera.main.transform.localPosition = originalCameraPosition;

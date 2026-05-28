@@ -104,7 +104,9 @@ public static class CameraOperations
                 break;
 
             default:
-                throw new System.ArgumentException("Angle must be 90, 180, or 270.");
+                rotated = new Texture2D(height, width);
+                rotatedPixels = new Color32[originalPixels.Length];
+                break;
         }
 
         rotated.SetPixels32(rotatedPixels);
