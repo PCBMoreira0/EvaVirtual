@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem.Composites;
 using System;
 using UnityEngine.Events;
+using System.IO;
 
 public class CameraController : MonoBehaviour
 {
@@ -47,7 +48,7 @@ public class CameraController : MonoBehaviour
         }
         IsCamAvailable = true;
 
-        webCamTexture = new WebCamTexture(GetCamera(false), (int)camViewport.rectTransform.rect.width, (int)camViewport.rectTransform.rect.height);
+        webCamTexture = new WebCamTexture(GetCamera(false));
         camViewport.texture = webCamTexture;
     }
 
@@ -82,14 +83,47 @@ public class CameraController : MonoBehaviour
     public IEnumerator StartCamera(bool isFrontCamera)
     {
         if (!IsCamAvailable) yield break;
-
         if (IsPlaying) yield break;
 
         OnCameraActivated?.Invoke();
 
         webCamTexture.deviceName = GetCamera(isFrontCamera);
         webCamTexture.Play();
+
+        // Espera 1 segundo para a câmera inicializar e entregar a resolução real
         yield return new WaitForSeconds(1);
+
+        int w = webCamTexture.width;
+        int h = webCamTexture.height;
+
+        // Criamos um Rect padrão (0,0 inicial; 1,1 cobrindo toda a imagem)
+        Rect uvRect = new Rect(0, 0, 1, 1);
+
+        // Se a câmera for Horizontal/Paisagem (Largura maior que Altura)
+        if (w > h)
+        {
+            // Descobre a porcentagem da largura que precisamos manter para virar um quadrado
+            float percentageToKeep = (float)h / w;
+
+            uvRect.width = percentageToKeep;
+            // Centraliza o corte no eixo X (horizontal)
+            uvRect.x = (1f - percentageToKeep) / 2f;
+        }
+        // Se a câmera for Vertical/Retrato (Altura maior que Largura)
+        else if (h > w)
+        {
+            // Descobre a porcentagem da altura que precisamos manter
+            float percentageToKeep = (float)w / h;
+
+            uvRect.height = percentageToKeep;
+            // Centraliza o corte no eixo Y (vertical)
+            uvRect.y = (1f - percentageToKeep) / 2f;
+        }
+
+        // Aplica o corte visual direto no componente RawImage
+        camViewport.uvRect = uvRect;
+
+        // Aplica a rotação necessária do celular
         camViewport.rectTransform.localEulerAngles = new Vector3(0, 0, -webCamTexture.videoRotationAngle);
 
         Camera.main.transform.localPosition = cameraModePosition;
@@ -100,7 +134,7 @@ public class CameraController : MonoBehaviour
     {
         if (!IsPlaying) return null;
 
-        return CameraOperations.RotateTexture(webCamTexture.GetPixels32(), webCamTexture.width, webCamTexture.height, 360 - webCamTexture.videoRotationAngle);
+        return CameraOperations.GetCroppedAndRotatedTexture(webCamTexture);
     }
 
     public Color32[] GetCameraFramePixels()
@@ -134,4 +168,27 @@ public class CameraController : MonoBehaviour
 
         OnCameraDeactivated?.Invoke();
     }
+
+    public void TestSaveImageToFile()
+    {
+        Texture2D finalPhoto = GetCameraFrame();
+
+        if (finalPhoto != null)
+        {
+            // 1. Converte a textura para um array de bytes (formato JPG)
+            byte[] bytes = finalPhoto.EncodeToJPG(100);
+
+            // 2. Define o caminho onde será salvo (Application.persistentDataPath funciona no PC, Android e iOS)
+            string filePath = Path.Combine(Application.persistentDataPath, "Teste_Camera_Recorte.jpg");
+
+            // 3. Salva o arquivo no disco
+            File.WriteAllBytes(filePath, bytes);
+
+            Debug.Log("Imagem salva com sucesso no caminho: " + filePath);
+
+            // 4. Limpa a textura da memória da Unity, já que salvamos no disco
+            Destroy(finalPhoto);
+        }
+    }
+
 }

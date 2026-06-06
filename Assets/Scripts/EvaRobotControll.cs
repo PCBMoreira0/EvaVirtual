@@ -118,6 +118,7 @@ public class EvaRobotControll : MonoBehaviour
 
     public async void StopRobot()
     {
+        await webCommunication.Disconnect();
         await apiCommunication.DeleteSimulator();
         StartCoroutine(ResetRobot());
         OnSimulationEnded?.Invoke();

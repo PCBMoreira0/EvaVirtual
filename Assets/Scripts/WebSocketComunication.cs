@@ -186,7 +186,7 @@ public class WebSocketComunication : MonoBehaviour
         }
     }
 
-    private async void OnApplicationQuit()
+    public async Awaitable Disconnect()
     {
         isIntentionalClose = true;
         
@@ -194,5 +194,10 @@ public class WebSocketComunication : MonoBehaviour
         {
             await websocket.Close();
         }
+    }
+
+    private async void OnApplicationQuit()
+    {
+        await Disconnect();
     }
 }

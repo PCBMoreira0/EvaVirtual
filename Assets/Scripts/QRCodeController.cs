@@ -2,12 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using ZXing;
 using ZXing.Common;
 
 public class QRCodeController : MonoBehaviour
 {
     private CameraController cameraController;
+    
     BarcodeReader reader;
     private void Awake()
     {
