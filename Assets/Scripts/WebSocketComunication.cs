@@ -1,9 +1,9 @@
 using System;
 using System.Text;
+using System.Threading.Tasks; 
 using NativeWebSocket;
 using Newtonsoft.Json;
 using UnityEngine;
-using UnityEngine.Events;
 
 public enum SendCommands
 {
@@ -28,6 +28,10 @@ public class WebSocketComunication : MonoBehaviour
     public event Action OnDisconnect;
 
     [SerializeField] private string userId = "0";
+    
+    [SerializeField] private float reconnectDelay = 2f;
+    private bool isIntentionalClose = false;
+    private bool isReconnecting = false;
 
     public void SetUserID(string userId)
     {
@@ -41,6 +45,9 @@ public class WebSocketComunication : MonoBehaviour
 
     public async void Connect()
     {
+        if (websocket != null && websocket.State == WebSocketState.Open) return;
+
+        isReconnecting = false;
         Application.runInBackground = true;
 
         websocket = new WebSocket("ws://" + ipAddress + "/ws/" + userId);
@@ -60,13 +67,18 @@ public class WebSocketComunication : MonoBehaviour
         {
             Debug.Log("Connection closed! Code: " + code);
             OnDisconnect?.Invoke();
+            
+            if (!isIntentionalClose)
+            {
+                AttemptReconnect();
+            }
         };
 
         websocket.OnMessage += (bytes) =>
         {
             var message = Encoding.UTF8.GetString(bytes);
             CommandMessage commandMessage = JsonConvert.DeserializeObject<CommandMessage>(message);
-            string debug = $"Received OnMessage! Command: {commandMessage.Command}, Parameters: ";;
+            string debug = $"Received OnMessage! Command: {commandMessage.Command}, Parameters: ";
             foreach (var kv in commandMessage.Parameter)
             {
                 debug += $"Key: {kv.Key}, Value: {kv.Value} | "; 
@@ -75,12 +87,39 @@ public class WebSocketComunication : MonoBehaviour
             OnMessageReceived?.Invoke(commandMessage);
         };
 
-        await websocket.Connect();
+        try
+        {
+            await websocket.Connect();
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"Connection failed: {e.Message}");
+            if (!isIntentionalClose)
+            {
+                AttemptReconnect();
+            }
+        }
     }
+
+    private async void AttemptReconnect()
+    {
+        if (isReconnecting || isIntentionalClose) return;
+
+        isReconnecting = true;
+        Debug.Log($"Attempting to reconnect in {reconnectDelay} seconds...");
+        
+        await Task.Delay(Mathf.RoundToInt(reconnectDelay * 1000));
+        
+        if (!isIntentionalClose)
+        {
+            Connect();
+        }
+    }
+
 
     public async void SendWebSocketMessage(string message)
     {
-        if (websocket.State == WebSocketState.Open)
+        if (websocket != null && websocket.State == WebSocketState.Open)
         {
             await websocket.SendText(message);
         }
@@ -88,7 +127,7 @@ public class WebSocketComunication : MonoBehaviour
 
     public async void SendWebSocketMessageALONE()
     {
-        if (websocket.State == WebSocketState.Open)
+        if (websocket != null && websocket.State == WebSocketState.Open)
         {
             await websocket.SendText(mensagem);
         }
@@ -113,7 +152,6 @@ public class WebSocketComunication : MonoBehaviour
             case SendCommands.USEREMOTION_RESPONSE:
                 SendWebSocketMessage($"{{\"command\":\"useremotion_response\",\"parameter\":\"{payload}\"}}");
                 break;
-            
             case SendCommands.SET_SCRIPT:
                 SendWebSocketMessage($"{{\"command\":\"set_script\",\"parameter\":\"{payload}\"}}");
                 break;
@@ -126,9 +164,33 @@ public class WebSocketComunication : MonoBehaviour
         }
     }
 
+
+    void Update()
+    {
+        // Necessário para a biblioteca NativeWebSocket processar mensagens na thread principal
+        #if !UNITY_WEBGL || UNITY_EDITOR
+        if (websocket != null && websocket.State == WebSocketState.Open)
+        {
+            websocket.DispatchMessageQueue();
+        }
+        #endif
+
+        if (UnityEngine.InputSystem.Keyboard.current != null && 
+            UnityEngine.InputSystem.Keyboard.current.tKey.wasPressedThisFrame)
+        {
+            if (websocket != null && websocket.State == WebSocketState.Open)
+            {
+                Debug.LogWarning("SIMULAÇÃO: Fechando a conexão forçadamente para testar reconexão!");
+                websocket.Close(); 
+            }
+        }
+    }
+
     private async void OnApplicationQuit()
     {
-        if(websocket != null)
+        isIntentionalClose = true;
+        
+        if (websocket != null)
         {
             await websocket.Close();
         }

@@ -53,7 +53,7 @@ public class EvaRobotControll : MonoBehaviour
     public IEnumerator testtt()
     {
         string qrResult = null;
-        yield return userEmotionController.ScanEmotion(apiCommunication, (result) => { qrResult = result; });
+        yield return qrCodeController.Scan((result) => { qrResult = result; });
 
         Debug.Log(qrResult);
     }

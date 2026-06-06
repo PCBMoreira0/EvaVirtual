@@ -37,7 +37,7 @@ public class CameraController : MonoBehaviour
         if (webCamDevices.Length == 0)
         {
             IsCamAvailable = false;
-            Debug.Log("Nenhuma camera dispon�vel");
+            Debug.Log("Nenhuma camera disponível");
             yield break;
         }
 
